@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD bcd73d9 (S07 commit) until the S08 commit, tree clean as of S08 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD 684e0d0 (S08 fix commit) until the NR-D2-S01 commit, tree clean as of NR-D2-S01 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: NR-D1-S09; decide on Mininet in WSL.
+- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S01 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
 
 ## Task Log
 
@@ -102,3 +102,15 @@ Never log secrets here.
 - Scope: scripts/dev-neuro.sh (start emulator+backend+frontend on 127.0.0.1, seed test user, logs in .dev-logs/, stop on Ctrl-C or `stop`), scripts/check-neuro.sh (health checks, non-zero exit on failure), docs/setup/run-local.md rewrite, README quick start, .gitattributes (*.sh eol=lf, since autocrlf would break bash scripts), .gitignore .dev-logs/. No deployment, no Firebase Hosting.
 - Planned paths: scripts/dev-neuro.sh, scripts/check-neuro.sh, docs/setup/run-local.md, README.md, .gitattributes, .gitignore, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: git status clean; manual servers from S07 demo were running (emulator 38352, backend 4852, frontend 49300) and will be stopped before testing the script.
+
+### NR-D2-S01 — Create two separate Stitch projects and design tokens
+- Status: PARTIAL (tokens + files DONE; "two separate Stitch projects" and the missing master prompt NOT done, see below). Intended commit: `neuroroute: create-two-separate-stitch-projects-and-design-token`.
+- Verified: root `pytest -q tests` 49 passed on .venv (3.15) and .venv-rl (3.13); backend 50 passed; ruff clean; frontend typecheck 0, 12 passed, build ok, lint 0. `build_tokens.py --check` enforced by test. Contrast numbers: text pairs >=4.5 all modes; white on indigo 4.12, on teal 3.31 (documented gap).
+- Paths changed: design/stitch/MASTER_PROMPT.md, design/tokens.json, scripts/build_tokens.py, tests/test_tokens.py, frontend/src/styles/tokens.css (generated), README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Decisions: tokens.json is the source, CSS generated; radii follow Stitch prose (8/12/16) not YAML; dark default + light parity; derived light text/status-text colors flagged `derived` in meta; old CSS var names kept as aliases; fonts not bundled.
+- NOT done / needs user: (1) original master prompt text was not provided: MASTER_PROMPT.md holds the Stitch design brief with a provenance note; (2) no new Stitch projects created (would write to user's account; existing project `11953126075048924226` covers both tenants); (3) browser visual check of the new dark theme not done. Next: user decides on creating separate NeuroRoute/NetMind Stitch projects; next planner task.
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD 684e0d0)
+- Finding (read-only Stitch MCP list_projects): user already has project `projects/11953126075048924226` "AI Network Design System" (created 2026-10-21) with design system "Soft Liquid Minimal": dual tenants, Indigo #6974D9 = NeuroRoute / Academic Research, Teal #0D9E96 = NetMind / Telemetry; dark default + light parity; Inter + JetBrains Mono. Its 9 screens still show "Generating Screen...". The task's "provided master design prompt" was NOT in the message.
+- Scope: design/stitch/MASTER_PROMPT.md (labelled: verbatim design brief copied from that Stitch design system, NOT the missing original prompt), design/tokens.json (light/dark colors, text, spacing, radii, motion, elevation), frontend/src/styles/tokens.css generated from it by scripts/build_tokens.py (existing var names kept as aliases), tests/test_tokens.py (structure, css drift, WCAG contrast, every var() used exists). NOT done: creating new Stitch projects (writes to user's account; existing project already covers both tenants), bundling fonts (no hosted assets rule).
+- Planned paths: design/stitch/MASTER_PROMPT.md, design/tokens.json, frontend/src/styles/tokens.css, scripts/build_tokens.py, tests/test_tokens.py, docs/task_log.md, docs/codebase_audit.md, README.md, ai-memory.md
+- Baseline evidence: git status clean; backend 50 passed, root 22 passed, frontend 12 passed (S08).

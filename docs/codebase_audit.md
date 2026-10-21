@@ -33,3 +33,7 @@
 ## 2026-10-21 (NR-D1-S08)
 - Scripts are bash-only; PID handling uses /proc/<pid>/winpid + taskkill on Git Bash and plain kill elsewhere (Linux/macOS path untested).
 - Test credentials in the README/script output are throwaway emulator values, not secrets.
+
+## 2026-10-21 (NR-D2-S01)
+- Tokens: JSON is the source, CSS is generated and drift-tested. Existing components now render in dark mode by default; not visually reviewed.
+- Risk: brand-fill text contrast (4.12:1) is a design-level gap; Inter/JetBrains Mono not loaded so rendering uses fallbacks; derived light-mode text colors are our choice, not Stitch's.

@@ -62,6 +62,16 @@ npm run typecheck; npm test; npm run build
 ```
 `VITE_API_BASE_URL` (default `/api`) is documented in `frontend/.env.example`. Details: [docs/setup/run-local.md](docs/setup/run-local.md).
 
+## Design tokens
+
+`design/tokens.json` is the single source (Soft Liquid Minimal; indigo `#6974D9` = NeuroRoute, teal `#0D9E96` = NetMind): light and dark colors, type scale, spacing, radii (8/12/16), elevation, motion. `frontend/src/styles/tokens.css` is generated from it:
+
+```bash
+.venv/Scripts/python scripts/build_tokens.py          # regenerate
+.venv/Scripts/python scripts/build_tokens.py --check  # exit 1 if stale (also enforced by tests/test_tokens.py)
+```
+Dark is the default; light follows the OS (`prefers-color-scheme`) or `<html data-theme="light">`. Provenance: values come from the Stitch project "AI Network Design System"; the verbatim brief is in `design/stitch/MASTER_PROMPT.md` (the original master prompt was not supplied). Light-mode text/status-text colors are derived (marked in `tokens.json`) to meet WCAG AA. Known gap: white text on the indigo brand fill is 4.12:1 (teal 3.31:1), so use bold/large text on brand fills. Fonts (Inter, JetBrains Mono) are named but not bundled; system fallbacks apply.
+
 ## Auth (Firebase Auth emulator, local only)
 
 Project `demo-neuroroute`, emulator at `127.0.0.1:9099` (`firebase.json`, `.firebaserc`). No real Firebase project, hosting or credentials are used.

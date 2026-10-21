@@ -50,3 +50,10 @@
 
 ## NR-D1-S08 follow-up — WSL bash pitfall (2026-10-21)
 - User ran `bash scripts/dev-neuro.sh` in cmd and got "missing: node / java": cmd's `bash` is WSL, not Git Bash. Added WSL detection in `scripts/dev-neuro.sh`; documented the Git Bash full-path command in `docs/setup/run-local.md` and README. Verified from PowerShell with `"C:\Program Files\Git\bin\bash.exe" scripts/dev-neuro.sh`: up, 5 checks ok, `stop` clean, ports free.
+
+## NR-D2-S01 — Stitch design tokens (2026-10-21)
+- Source found via read-only Stitch MCP: project "AI Network Design System" (`projects/11953126075048924226`) holds the Soft Liquid Minimal design system. The task's "provided master design prompt" was not in the message, so `design/stitch/MASTER_PROMPT.md` is the verbatim design brief from Stitch with a provenance header, not the original prompt.
+- Created: `design/stitch/MASTER_PROMPT.md`, `design/tokens.json`, `scripts/build_tokens.py`, `tests/test_tokens.py`. Regenerated: `frontend/src/styles/tokens.css` (old variable names kept as aliases; dark default, light via OS or data-theme; reduced-motion honoured). Edited: `README.md`.
+- Tests: root `pytest -q tests` 49 passed on `.venv` (3.15) and `.venv-rl` (3.13); backend 50 passed; ruff clean; frontend typecheck 0, 12 passed, build ok (CSS 5.37 kB), lint 0. Tests cover token groups, light/dark parity, CSS drift, WCAG AA for text pairs, and that every `var(--x)` used by the frontend is defined.
+- NOT done: creating two new Stitch projects (writes to the user's Stitch account; the existing project already covers NeuroRoute indigo + NetMind teal; delete/create left to the user's decision); bundling fonts; visual check in a browser.
+- Findings: Stitch YAML radii disagree with its prose (prose used); white-on-indigo 4.12:1 and white-on-teal 3.31:1; light-mode status anchors (3.77/3.19) too low for text so derived darker text variants added; the 9 Stitch screens still showed "Generating Screen...".
