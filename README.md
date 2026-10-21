@@ -139,5 +139,6 @@ Run tests: `.venv\Scripts\python -m pytest -q`
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): intended layering
+- [docs/stitch-integration.md](docs/stitch-integration.md) and [design/stitch/HANDOFF.md](design/stitch/HANDOFF.md): optional Stitch MCP, key safety, manual export workflow
 - [docs/setup/local-machine.md](docs/setup/local-machine.md): machine audit
 - [docs/task_log.md](docs/task_log.md), [docs/codebase_audit.md](docs/codebase_audit.md)

@@ -33,3 +33,7 @@ tensorboard/
 *-debug.log
 .firebase/
 .dev-logs/
+
+# Stitch: MCP config may contain an API key; exported HTML pulls CDN assets (reference only)
+.mcp.json
+design/stitch/screens/**/*.html

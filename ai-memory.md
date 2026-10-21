@@ -5,7 +5,7 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD 684e0d0 (S08 fix commit) until the NR-D2-S01 commit, tree clean as of NR-D2-S01 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD e914092 (NR-D2-S01 commit) until the NR-D2-S02 commit, tree clean as of NR-D2-S02 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
 - One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S01 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
@@ -114,3 +114,14 @@ Never log secrets here.
 - Scope: design/stitch/MASTER_PROMPT.md (labelled: verbatim design brief copied from that Stitch design system, NOT the missing original prompt), design/tokens.json (light/dark colors, text, spacing, radii, motion, elevation), frontend/src/styles/tokens.css generated from it by scripts/build_tokens.py (existing var names kept as aliases), tests/test_tokens.py (structure, css drift, WCAG contrast, every var() used exists). NOT done: creating new Stitch projects (writes to user's account; existing project already covers both tenants), bundling fonts (no hosted assets rule).
 - Planned paths: design/stitch/MASTER_PROMPT.md, design/tokens.json, frontend/src/styles/tokens.css, scripts/build_tokens.py, tests/test_tokens.py, docs/task_log.md, docs/codebase_audit.md, README.md, ai-memory.md
 - Baseline evidence: git status clean; backend 50 passed, root 22 passed, frontend 12 passed (S08).
+
+### NR-D2-S02 — Document Stitch MCP and manual handoff
+- Status: DONE. Intended commit: `neuroroute: document-stitch-mcp-and-manual-handoff`.
+- Verified: root `pytest -q tests` 55 passed on .venv (3.15) and .venv-rl (3.13); backend 50 passed; ruff clean; frontend typecheck 0 / 12 passed / build ok / lint 0. Environment facts: Stitch MCP is remote HTTP https://stitch.googleapis.com/mcp with X-Goog-Api-Key header in ~/.claude.json (key redacted when inspected, never copied); read-only Stitch calls list_screens / download_file worked; project now has 10 generated screens; exported HTML needs Tailwind CDN + Google Fonts + Material Symbols + hosted image.
+- Paths changed: docs/stitch-integration.md, design/stitch/HANDOFF.md, tests/test_stitch_docs.py, .gitignore (.mcp.json, design/stitch/screens/**/*.html), README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Decisions: manual export is the default and fully documented; MCP optional and read-only unless user asks; HTML exports gitignored (CDN deps), screenshots+notes committed; secret-scan test covers all tracked/untracked-unignored text files.
+- Limitations: Stitch web-UI menu names, other editors' MCP setup, key restriction/quota behavior NOT verified (stated in docs); claude mcp add syntax from docs, not re-run. No write-type Stitch tools called; no assets committed. Next: planner's next task.
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD e914092)
+- Scope: design/stitch/HANDOFF.md (manual export workflow, always available), docs/stitch-integration.md (optional MCP via supported editor, key safety, fallback). Facts to be verified from this environment (MCP server config with secrets REDACTED; read-only Stitch calls get_screen/list_screens) instead of guessed. No secrets, keys or tokens in the repo; .gitignore check for stitch/key files.
+- Planned paths: design/stitch/HANDOFF.md, docs/stitch-integration.md, README.md (link), .gitignore (if needed), tests (doc link/secret scan), docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; root 49 passed, backend 50, frontend 12 (NR-D2-S01).

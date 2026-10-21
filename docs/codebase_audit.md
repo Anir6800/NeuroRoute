@@ -37,3 +37,7 @@
 ## 2026-10-21 (NR-D2-S01)
 - Tokens: JSON is the source, CSS is generated and drift-tested. Existing components now render in dark mode by default; not visually reviewed.
 - Risk: brand-fill text contrast (4.12:1) is a design-level gap; Inter/JetBrains Mono not loaded so rendering uses fallbacks; derived light-mode text colors are our choice, not Stitch's.
+
+## 2026-10-21 (NR-D2-S02)
+- Docs only plus a repo-wide secret-scan test (patterns: Google API key, X-Goog-Api-Key with value, private key block, oauth token, sk- key). The scan is pattern-based, not exhaustive.
+- Risk: the Stitch API key sits in plaintext in `~/.claude.json` (outside the repo); `.mcp.json` ignored as a safety net only.
