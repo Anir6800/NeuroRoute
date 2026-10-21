@@ -1,5 +1,30 @@
+# Secrets (commit .env.example only)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials*
+secrets*
+
+# Python
 .venv/
 .venv-rl/
-.env
 __pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node / frontend
 node_modules/
+dist/
+
+# Generated experiment artifacts (heavy, reproducible)
+checkpoints/
+runs/
+results/
+tensorboard/
+*.zip
+*.pt
+*.sqlite3
+*.db

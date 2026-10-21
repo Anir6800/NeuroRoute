@@ -5,9 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Directory was EMPTY at start; NOT a git repository (no branch, no commits).
-- No README.md, docs/architecture.md, docs/codebase_audit.md, docs/task_log.md existed.
-- Pending tasks: NR-D1-S01 commit (needs git init + approval); install Python 3.11; decide on Mininet in WSL.
+- Git repo on `main`, HEAD 2f50fdf (S01 commit), tree clean as of S02 start (reconciled 2026-10-21; earlier "not a git repo" note was stale).
+- Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
+- Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
+- Pending tasks: NR-D1-S03; decide on Mininet in WSL.
 
 ## Task Log
 
@@ -25,3 +26,13 @@ Never log secrets here.
 - Scope: document local env in `docs/setup/local-machine.md`; create `docs/task_log.md`, `docs/codebase_audit.md` (absent, so created).
 - Planned paths: docs/setup/local-machine.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: empty dir; `git status` -> "fatal: not a git repository"; no tests/build exist to run.
+
+### NR-D1-S02 — Initialize isolated Git repository
+- Status: DONE (docs/config only; no code to test). Intended commit: `neuroroute: initialize-isolated-git-repository`.
+- Verified: `pytest -q` -> no tests ran; `ruff check .` -> no Python files; `git check-ignore` OK for .env/.env.local/key.pem/checkpoints/results, not for .env.example/README.md.
+- Paths changed: .gitignore (edited), README.md, docs/architecture.md (new), docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Limitations: no remote; broad *.zip/*.db ignores. Next: S03 scaffold backend/frontend with real tests.
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD 2f50fdf)
+- Scope: repo already initialized in S01, so reuse it (no nested neuroroute-ai dir, no second git init). Extend .gitignore, add README.md (incl. conventional-commit guide, env vars), docs/architecture.md; update task_log + codebase_audit.
+- Planned paths: .gitignore, README.md, docs/architecture.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: `git status` clean, 1 commit, no tests/build exist.
