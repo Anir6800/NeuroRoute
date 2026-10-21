@@ -34,3 +34,10 @@
 - Created: `backend/research/simulation/models.py`, `backend/app/schemas/topology.py`, `experiments/configs/base_scenario.json`, `backend/tests/test_scenario.py`, `backend/tests/test_topology_schema.py`. Edited: `README.md`. Installed jsonschema (both venvs), pydantic (.venv-rl).
 - Tests: `.venv` (3.15) 33 passed; `.venv-rl` (3.13) scenario tests 27 passed; ruff clean. Round trip (file -> model -> JSON -> model), JSON-Schema validation of the base file, 11 schema-visible invalid cases rejected by both schema and model, 10 cross-reference cases (incl. invalid edge) rejected by model, hash stable/order-insensitive/content-sensitive, same hash on both interpreters.
 - Open issues: cross-reference rules not expressible in JSON Schema; no service/route/loader yet.
+
+## NR-D1-S07 — Set up Firebase Auth emulator locally (2026-10-21)
+- Created: `firebase.json`, `.firebaserc`, `backend/app/core/auth.py`, `backend/app/api/me.py`, `frontend/src/lib/firebase.ts`, `frontend/src/api/me.ts`, `frontend/src/pages/Login.tsx`, `frontend/src/login.test.tsx`, `backend/tests/test_auth.py`, `scripts/seed_emulator_user.py`. Edited: `backend/app/core/config.py`, `backend/app/main.py`, `backend/pyproject.toml`, `frontend/src/{App.tsx,components/Layout.tsx}`, `frontend/.env.example`, `.gitignore`, `README.md`. Installed: firebase-admin 7.7.0 (.venv), firebase 13.1.0 (frontend).
+- Tests: backend `pytest -q` 50 passed, ruff clean; frontend typecheck clean, `npm test` 12 passed, build ok (43 modules), lint exit 0.
+- Live (real emulator 127.0.0.1:9099 + backend): /me no token 401; seeded researcher 200; user without role claim 403; garbage token 401. All processes stopped, ports free.
+- Finding: in emulator mode firebase-admin skips signature AND expiry checks; auth.py checks `exp` itself (tested).
+- Open issues: browser UI login not exercised (no browser tool); `npm audit` reports 4 high in transitive @grpc/grpc-js via @firebase/firestore (unused; fix needs --force/breaking, not applied); firebase JS SDK adds bundle weight (full firebase package, only auth used).

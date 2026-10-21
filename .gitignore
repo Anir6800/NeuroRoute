@@ -28,3 +28,7 @@ tensorboard/
 *.pt
 *.sqlite3
 *.db
+
+# Firebase emulator logs
+*-debug.log
+.firebase/

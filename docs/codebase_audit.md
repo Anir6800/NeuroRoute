@@ -24,3 +24,8 @@
 ## 2026-10-21 (NR-D1-S06)
 - First research-layer code: scenario contract with hash. Import direction app -> research verified by grep, not yet enforced by a test.
 - Risk: base_scenario values (capacities, demands) are illustrative inputs, not measurements; any future results must cite the config_hash that produced them.
+
+## 2026-10-21 (NR-D1-S07)
+- Auth is dev-only by construction (demo- project, loopback host enforced in Settings). Any move to a real project needs a separate, signature-verifying path.
+- Risk: expiry is checked by our code because the SDK skips it in emulator mode; tests cover it. 401-vs-403 for wrong project relies on reading the unverified `aud`.
+- Risk: npm audit highs in unused firestore transitive dep.

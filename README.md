@@ -53,6 +53,22 @@ npm run typecheck; npm test; npm run build
 ```
 `VITE_API_BASE_URL` (default `/api`) is documented in `frontend/.env.example`. Details: [docs/setup/run-local.md](docs/setup/run-local.md).
 
+## Auth (Firebase Auth emulator, local only)
+
+Project `demo-neuroroute`, emulator at `127.0.0.1:9099` (`firebase.json`, `.firebaserc`). No real Firebase project, hosting or credentials are used.
+
+```powershell
+firebase emulators:start --only auth --project demo-neuroroute          # repo root; needs Java + firebase-tools
+.\.venv\Scripts\python scripts\seed_emulator_user.py                   # dev@neuroroute.test / devpass123, role=researcher
+```
+Then run the backend and frontend, open http://127.0.0.1:5173/login and sign in. The page calls `GET /me` with the ID token.
+
+- `GET /me` needs `Authorization: Bearer <ID token>`. Missing, malformed or expired token -> **401**; token for a different project, or a `role` claim not in `NEUROROUTE_ALLOWED_ROLES` (default `researcher`, `admin`; a missing claim counts as wrong) -> **403**.
+- Verification uses the Firebase Admin SDK in emulator mode. Settings refuse any project id not starting with `demo-` and any non-loopback emulator host.
+- **Emulator tokens are unsigned and must never be trusted outside local development.** In emulator mode the Admin SDK checks neither signature nor expiry (this app checks `exp` itself), so anyone can forge a token. Do not point this code at a real project or a non-local host.
+- Env vars (all `NEUROROUTE_` prefixed, optional): `FIREBASE_PROJECT_ID` (default `demo-neuroroute`), `AUTH_EMULATOR_HOST` (default `127.0.0.1:9099`), `ALLOWED_ROLES`. Frontend: `VITE_AUTH_EMULATOR_URL` in `frontend/.env.example`.
+- Fallback: with the emulator down, sign-in shows "Sign-in failed (is the Auth emulator running...)"; `/health` stays public.
+
 ## Scenario schema (v1.0)
 
 `backend/research/simulation/models.py` defines `Scenario` (pydantic, `extra="forbid"`, frozen). Example: `experiments/configs/base_scenario.json`.

@@ -6,6 +6,7 @@ export function Layout() {
       <nav aria-label="Main" style={{ display: 'flex', gap: 'var(--space)', alignItems: 'center' }}>
         <strong style={{ color: 'var(--color-accent)' }}>NeuroRoute</strong>
         <NavLink to="/">Home</NavLink>
+        <NavLink to="/login">Login</NavLink>
       </nav>
       <main>
         <Outlet />
