@@ -33,6 +33,34 @@ None are read yet. When added, list them in `.env.example` (committed, no real v
 - Task commits so far use `neuroroute: <task-slug>`.
 - Never commit `.env`, keys, credentials, checkpoints, results or `node_modules`; see [.gitignore](.gitignore). Check `git status` and `git diff --check --cached` before each commit.
 
+## Layout and boundaries
+
+Python dirs are packages (`__init__.py`); other empty dirs hold a `.gitkeep`. Dependencies point downward only: `api -> services -> repositories -> DB`. `backend/research/` never imports from `backend/app/`.
+
+| Path | Purpose |
+|---|---|
+| `frontend/src/` | React + TS + Vite UI. Design tokens and small reusable components only; no pasted Stitch screens. |
+| `backend/app/api/` | HTTP routes (FastAPI, `127.0.0.1`): parse/validate, call services. |
+| `backend/app/services/` | Business logic; calls repositories and research code. |
+| `backend/app/repositories/` | All DB access. |
+| `backend/app/schemas/` | Typed request/response models. |
+| `backend/app/core/` | Config, timeouts, error types. |
+| `backend/research/simulation/` | NetworkX topologies and traffic simulation; standalone. |
+| `backend/research/environments/` | Gymnasium routing environments (with action masks). |
+| `backend/research/baselines/` | Non-learning routers (e.g. shortest path) for comparison. |
+| `backend/research/agents/` | MaskablePPO wrappers; needs `.venv-rl`. |
+| `backend/research/training/` | Training entry points; output goes to git-ignored `checkpoints/`. |
+| `backend/research/evaluation/` | Metrics; every result labelled simulated or measured. |
+| `backend/tests/` | Unit tests for `backend/`. |
+| `tests/` | Cross-cutting tests (layout, integration). |
+| `experiments/configs/` | Versioned experiment configs (no results). |
+| `scripts/` | Local helper scripts. |
+| `design/stitch/screens/` | Reference exports from Stitch; inputs for token extraction, not shipped code. |
+| `network_lab/mininet/` | Optional Mininet validation (blocked until installed in WSL). |
+| `docs/` | Architecture, setup, task log, audit. |
+
+Run tests: `.venv\Scripts\python -m pytest -q`
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): intended layering

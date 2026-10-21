@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD 2f50fdf (S01 commit), tree clean as of S02 start (reconciled 2026-10-21; earlier "not a git repo" note was stale).
+- Git repo on `main`, HEAD a1d1e6c (S02 commit) before S03 commit, tree clean as of S03 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- Pending tasks: NR-D1-S03; decide on Mininet in WSL.
+- Pending tasks: NR-D1-S04; decide on Mininet in WSL.
 
 ## Task Log
 
@@ -36,3 +36,12 @@ Never log secrets here.
 - Scope: repo already initialized in S01, so reuse it (no nested neuroroute-ai dir, no second git init). Extend .gitignore, add README.md (incl. conventional-commit guide, env vars), docs/architecture.md; update task_log + codebase_audit.
 - Planned paths: .gitignore, README.md, docs/architecture.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: `git status` clean, 1 commit, no tests/build exist.
+
+### NR-D1-S03 — Create canonical folder tree
+- Status: DONE. Intended commit: `neuroroute: create-canonical-folder-tree`.
+- Verified: `pytest -q` 22 passed on .venv (3.15) and .venv-rl (3.13); `ruff check .` clean; `find -type d` shows all named dirs.
+- Decisions: `__init__.py` in Python dirs, `.gitkeep` elsewhere; path map lives in README. Limitations: no pyproject/import-path config; boundary rule not machine-checked. Next: S04 (first real code / env example).
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD a1d1e6c)
+- Scope: create the folder tree from the prompt; `__init__.py` in Python package dirs, `.gitkeep` elsewhere; document every path in README; add tests/test_layout.py.
+- Planned paths: frontend/src, backend/app/{api,services,repositories,schemas,core}, backend/research/{simulation,environments,baselines,agents,training,evaluation}, backend/tests, tests, experiments/configs, scripts, design/stitch/screens, network_lab/mininet, README.md, docs/*, ai-memory.md
+- Baseline evidence: git status clean; `pytest -q` -> no tests ran.
