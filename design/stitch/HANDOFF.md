@@ -19,7 +19,7 @@ Source project: **"AI Network Design System"** (`projects/11953126075048924226`)
 | NeuroRoute AI - Settings & Local Environment | `58e1837246e0450d8f78d6a4779bc5b9` |
 | Design System & Component DNA | `ab0d4c46467d4a588395450ffc512753` |
 
-Local specs written so far: [Overview](screens/overview.md) (from the Research Workspace Overview screen), [Topology Studio](screens/topology-studio.md), [Training Lab](screens/training-lab.md). Convention: one spec file `design/stitch/screens/<slug>.md` per screen (layout, states, token references, data honesty; use `overview.md` as the model); the optional `<slug>/` folder below holds the screenshot and local-only HTML.
+Local specs written so far: [Overview](screens/overview.md) (from the Research Workspace Overview screen), [Topology Studio](screens/topology-studio.md), [Training Lab](screens/training-lab.md), [Experiments](screens/experiments.md), [Model Comparison](screens/model-comparison.md) (also holds the cross-screen continuity comparison). Convention: one spec file `design/stitch/screens/<slug>.md` per screen (layout, states, token references, data honesty; use `overview.md` as the model); the optional `<slug>/` folder below holds the screenshot and local-only HTML.
 
 ## Steps
 

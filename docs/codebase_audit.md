@@ -53,3 +53,7 @@
 ## 2026-10-22 (NR-D2-S05)
 - Spec only. Training Lab cannot be built until environment, baselines, trainer CLI (`.venv-rl` subprocess) and a job API exist; the spec records that order.
 - Risk: the Stitch design implies capabilities (4 algorithms, GNN, GPU, pause) that conflict with the project's MaskablePPO/CPU plan.
+
+## 2026-10-22 (NR-D2-S06)
+- Specs only. Two tests assert "scipy/pyarrow not installed": installing either will fail the test on purpose so the specs get re-read.
+- Risk: the five Stitch screens disagree on shell, naming and sample numbers; building screens one by one from them would bake in the inconsistencies. The continuity rules in model-comparison.md section 6 (one shell component, one fixture set, one status vocabulary) should be adopted before UI work.
