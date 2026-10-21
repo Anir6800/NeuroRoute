@@ -6,8 +6,14 @@ export interface NavItem {
   icon: IconName
 }
 
-/** Single source of truth for the sidebar, breadcrumbs and document titles. */
-export const NAV_ITEMS: readonly NavItem[] = [{ path: '/', label: 'Overview', icon: 'overview' }]
+/** Single source of truth for the sidebar, breadcrumbs and document titles (router.tsx must match). */
+export const NAV_ITEMS: readonly NavItem[] = [
+  { path: '/', label: 'Overview', icon: 'overview' },
+  { path: '/topology', label: 'Topology Studio', icon: 'topology' },
+  { path: '/training', label: 'Training Lab', icon: 'training' },
+  { path: '/experiments', label: 'Experiments', icon: 'experiments' },
+  { path: '/comparison', label: 'Model Comparison', icon: 'comparison' },
+]
 
 const OTHER_TITLES: Record<string, string> = { '/login': 'Sign in' }
 

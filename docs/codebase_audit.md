@@ -61,3 +61,7 @@
 ## 2026-10-22 (NR-D2-S07)
 - First real UI code: shell + primitives, tested for behavior, tokens-only CSS, and no hosted assets. Pages are still the S05 ones (Overview=Home, Login, 404); five MVP routes arrive in S08.
 - Risks: unseen visually; light theme values are partly derived; Firebase SDK ~370 kB bundle (auth only, tree-shaking not audited); mobile drawer has no focus trap; icon set is hand-drawn and minimal.
+
+## 2026-10-22 (NR-D2-S08)
+- Five screen skeletons + router. All content is empty-state text; no data layer exists, so `status` is a prop defaulting to `empty` (used by tests and future wiring), not real state.
+- Risks: pages will need real data hooks (loading/error are only exercised in tests); shell not seen visually; `/login` chunk is lazy, so a slow network shows a blank content area briefly (no Suspense fallback beyond React Router's default).

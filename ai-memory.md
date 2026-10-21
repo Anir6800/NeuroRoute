@@ -187,5 +187,9 @@ Never log secrets here.
 - Baseline evidence: git status clean; root 80 passed, backend 50, frontend 12 (NR-D2-S06).
 
 ### NR-D2-S08 — Implement screen skeletons and navigation
-- Status: PLANNED (follows S07 with its own commit)
+- Status: DONE (not visually verified by me; user to look). Intended commit: `neuroroute: implement-screen-skeletons-and-navigation`.
+- Verified: frontend typecheck 0 / `npm test` 57 passed / lint 0 with no warnings / build ok (main JS 325 kB, Login chunk 106 kB); root `pytest -q tests` 86 passed on .venv (3.15) and .venv-rl (3.13); backend 50; ruff clean; mutation check (sample data injection + route rename) caught by 5 tests.
+- Paths changed: frontend/src/{app/router.tsx,app/navigation.ts,App.tsx,main.tsx,pages/{Overview,Topology,Training,Experiments,Comparison}.tsx,navigation.test.tsx,app.test.tsx,components/ui/PageHeader.tsx,components/layout/AppShell.tsx}, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md. Removed pages/Home.tsx.
+- Decisions: data router with exported `routes` (tests use createMemoryRouter); `/login` lazy (Firebase out of main bundle); pages take optional `status` prop defaulting to 'empty' (loading/error exist and are tested, no fake data); sample-data markers asserted absent; PageHeader is a div (not header landmark); AppShell drawer derived from pathname (fixes S07 lint warning).
+- Limitations: no real data layer; no visual/browser check; no Suspense fallback for the lazy route. NEXT ACTION: restart the dev stack the user had running (I stopped it in S07 via `dev-neuro.sh stop`); verify with check-neuro.sh; tell user. Day-2 planner tasks beyond S08 not yet received.
 - Scope: frontend/src/pages/{Overview,Topology,Training,Experiments,Comparison}.tsx (loading/empty/error UI via ScreenState; NO mock data; honest empty states, disabled actions with reasons), frontend/src/app/router.tsx (route config with handles, data router), navigation smoke tests, breadcrumbs generated from route handles.
