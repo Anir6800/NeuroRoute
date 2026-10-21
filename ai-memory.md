@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD e815caf (S06 commit) until the S07 commit, tree clean as of S07 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD bcd73d9 (S07 commit) until the S08 commit, tree clean as of S08 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: NR-D1-S08; decide on Mininet in WSL.
+- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: NR-D1-S09; decide on Mininet in WSL.
 
 ## Task Log
 
@@ -80,7 +80,7 @@ Never log secrets here.
 - Baseline evidence: git status clean; backend pytest 5 passed, root tests 22 passed, frontend 7 passed (S04/S05); pydantic only in .venv, jsonschema in neither.
 
 ### NR-D1-S07 — Set up Firebase Auth emulator locally
-- Status: DONE (browser UI login not exercised). Intended commit: `neuroroute: set-up-firebase-auth-emulator-locally`.
+- Status: DONE. Browser login CONFIRMED by user screenshot 2026-10-21 ("Signed in as dev@neuroroute.test (role: researcher)" at 127.0.0.1:5173/login). Commit: `neuroroute: set-up-firebase-auth-emulator-locally`.
 - Verified: backend `pytest -q` 50 passed, ruff clean; frontend typecheck clean, 12 tests passed, build ok, lint 0. LIVE: `firebase emulators:start --only auth --project demo-neuroroute` (127.0.0.1:9099, hub 4400) + uvicorn: /me no token 401, seeded researcher 200 {uid,email,role}, no-role user 403, garbage token 401. Emulator + backend killed by PID tree, ports 9099/8001 confirmed free.
 - Paths changed: firebase.json, .firebaserc, backend/app/{core/auth.py,core/config.py,api/me.py,main.py}, backend/pyproject.toml, backend/tests/test_auth.py, scripts/seed_emulator_user.py, frontend/src/{lib/firebase.ts,api/me.ts,pages/Login.tsx,login.test.tsx,App.tsx,components/Layout.tsx}, frontend/{package.json,package-lock.json,.env.example}, .gitignore, README.md, docs/*, ai-memory.md. Installed firebase-admin 7.7.0 in .venv only; firebase 13.1.0 in frontend.
 - Decisions: reverses S05 "skip firebase" only for Auth emulator (still no hosting/cloud). Settings enforce demo- project id + loopback emulator host. Role claim `role` in {researcher, admin} required; missing = 403. SDK doesn't check exp in emulator mode -> own check (10 s skew). Wrong project -> 403 via unverified aud. Tests forge unsigned alg-none tokens through the real SDK path.
@@ -90,3 +90,14 @@ Never log secrets here.
 - Scope: LOCAL emulator only (project demo-neuroroute, Auth at 127.0.0.1:9099, no Firebase hosting/cloud, no real credentials). firebase.json, .firebaserc, frontend/src/lib/firebase.ts (+ minimal Login page), backend/app/core/auth.py (FastAPI dependency using firebase-admin against emulator; 401 missing/invalid/expired, 403 wrong project or role), GET /me, tests, scripts/seed_emulator_user.py. README note: emulator tokens are unsigned, never trust outside local dev. This is the one place the earlier "skip firebase" decision (S05) is reversed: that was about hosting/unused deps; Auth emulator is explicitly requested.
 - Planned paths: firebase.json, .firebaserc, frontend/package.json (+firebase), frontend/src/lib/firebase.ts, frontend/src/pages/Login.tsx, frontend/src/App.tsx, backend/app/core/{auth,config}.py, backend/app/main.py, backend/tests/test_auth.py, scripts/seed_emulator_user.py, frontend/.env.example, README.md, docs/*, ai-memory.md
 - Baseline evidence: git status clean; firebase CLI 14.17.0 global, Java 27 present, firebase-admin dry-run resolves on 3.15; backend 33 passed, frontend 7 passed (prior tasks).
+
+### NR-D1-S08 — Create local one-command developer scripts
+- Status: DONE (reproduced on this laptop only). Intended commit: `neuroroute: create-local-onecommand-developer-scripts`.
+- Verified: bash -n ok; check with stack down -> exit 1; `scripts/dev-neuro.sh` starts emulator 9099 + backend 8001 + frontend 5173 (all 127.0.0.1 only, netstat), seeds dev@neuroroute.test; `scripts/check-neuro.sh` -> 5 ok exit 0; double start refused; `stop`, SIGTERM and service-crash paths clean (ports free, no leftover bash). Suites: backend 50 passed/ruff clean, root 22 passed, frontend typecheck 0 / 12 passed / build ok / lint 0.
+- Paths changed: scripts/dev-neuro.sh, scripts/check-neuro.sh, .gitattributes, .gitignore, docs/setup/run-local.md, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Decisions: *.sh forced to LF via .gitattributes (autocrlf would break bash); PIDs tracked in a bash array + .dev-logs/pids; idle loop exits when any service dies; no processes left running after tests.
+- Limitations: fresh-machine setup not re-run from scratch; Linux/macOS path untested; no shellcheck; Java need unverified. Next: S09 per planner.
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD bcd73d9)
+- Scope: scripts/dev-neuro.sh (start emulator+backend+frontend on 127.0.0.1, seed test user, logs in .dev-logs/, stop on Ctrl-C or `stop`), scripts/check-neuro.sh (health checks, non-zero exit on failure), docs/setup/run-local.md rewrite, README quick start, .gitattributes (*.sh eol=lf, since autocrlf would break bash scripts), .gitignore .dev-logs/. No deployment, no Firebase Hosting.
+- Planned paths: scripts/dev-neuro.sh, scripts/check-neuro.sh, docs/setup/run-local.md, README.md, .gitattributes, .gitignore, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; manual servers from S07 demo were running (emulator 38352, backend 4852, frontend 49300) and will be stopped before testing the script.

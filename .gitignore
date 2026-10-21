@@ -32,3 +32,4 @@ tensorboard/
 # Firebase emulator logs
 *-debug.log
 .firebase/
+.dev-logs/

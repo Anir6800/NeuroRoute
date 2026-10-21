@@ -41,3 +41,9 @@
 - Live (real emulator 127.0.0.1:9099 + backend): /me no token 401; seeded researcher 200; user without role claim 403; garbage token 401. All processes stopped, ports free.
 - Finding: in emulator mode firebase-admin skips signature AND expiry checks; auth.py checks `exp` itself (tested).
 - Open issues: browser UI login not exercised (no browser tool); `npm audit` reports 4 high in transitive @grpc/grpc-js via @firebase/firestore (unused; fix needs --force/breaking, not applied); firebase JS SDK adds bundle weight (full firebase package, only auth used).
+
+## NR-D1-S08 — Create local one-command developer scripts (2026-10-21)
+- Created: `scripts/dev-neuro.sh`, `scripts/check-neuro.sh`, `.gitattributes` (`*.sh` LF). Rewrote `docs/setup/run-local.md`. Edited: `README.md` (quick start), `.gitignore` (`.dev-logs/`).
+- Verified: `bash -n` both scripts; check with stack down -> 5 FAIL, exit 1; `dev-neuro.sh` -> "NeuroRoute is up", seeded user; `check-neuro.sh` -> 5 ok, exit 0; listeners only on 127.0.0.1 (no 0.0.0.0/[::]); second start refused (3 ports busy, exit 1); `stop`, SIGTERM and crash paths leave no processes or listeners. Suites: backend 50 passed + ruff clean; root 22 passed; frontend typecheck 0, 12 passed, build ok, lint 0. User screenshot confirmed browser login at /login.
+- Bugs found while testing and fixed: idle loop kept running after `stop` (first fix read the deleted pids file; final fix tracks PIDs in a bash array).
+- Open issues: fresh-laptop setup (venv + installs) documented but not re-run from a clean machine; scripts need Git Bash/bash on Windows; no shellcheck available; Java requirement for the Auth emulator untested without Java.

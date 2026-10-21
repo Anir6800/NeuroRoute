@@ -4,6 +4,15 @@ Local-only research MVP for reinforcement-learning network routing: NetworkX top
 
 > Status: Day 1 scaffolding. No application code yet. Nothing here reports metrics or research results.
 
+## Quick start (local only)
+
+```bash
+# once: see docs/setup/run-local.md (create .venv, pip/npm install, firebase-tools)
+scripts/dev-neuro.sh      # Git Bash: emulator + backend + frontend on 127.0.0.1, Ctrl-C stops all
+scripts/check-neuro.sh    # second terminal: health checks, exit 0 = all passed
+```
+Open http://127.0.0.1:5173 (test login: `dev@neuroroute.test` / `devpass123`, emulator only). Full details and troubleshooting: [docs/setup/run-local.md](docs/setup/run-local.md).
+
 ## Environments
 
 Two Python virtualenvs (PyTorch has no Python 3.15 build; see [docs/setup/local-machine.md](docs/setup/local-machine.md)):

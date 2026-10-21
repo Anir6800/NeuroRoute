@@ -29,3 +29,7 @@
 - Auth is dev-only by construction (demo- project, loopback host enforced in Settings). Any move to a real project needs a separate, signature-verifying path.
 - Risk: expiry is checked by our code because the SDK skips it in emulator mode; tests cover it. 401-vs-403 for wrong project relies on reading the unverified `aud`.
 - Risk: npm audit highs in unused firestore transitive dep.
+
+## 2026-10-21 (NR-D1-S08)
+- Scripts are bash-only; PID handling uses /proc/<pid>/winpid + taskkill on Git Bash and plain kill elsewhere (Linux/macOS path untested).
+- Test credentials in the README/script output are throwaway emulator values, not secrets.
