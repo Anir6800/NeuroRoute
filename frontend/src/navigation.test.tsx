@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NAV_ITEMS } from './app/navigation'
@@ -31,6 +31,7 @@ const SAMPLE_MARKERS = ['3.42', '5.88', '8.14', '15.92', 'EXP-14', 'ActorCritic'
   'Elena Vance', 'Lead Researcher', '64-Spine', '4208-BURST']
 
 beforeEach(() => {
+  document.title = ''
   localStorage.clear()
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
 })
@@ -54,13 +55,14 @@ describe('navigation smoke tests', () => {
   it('walks every sidebar link; each page renders inside the same, never-remounted shell', async () => {
     renderApp('/')
     const banner = screen.getByRole('banner')
-    for (const item of NAV_ITEMS) {
+    for (const [i, item] of NAV_ITEMS.entries()) {
       const main = screen.getByRole('navigation', { name: 'Main' })
       fireEvent.click(within(main).getByRole('link', { name: item.label }))
       expect(await screen.findByRole('heading', { level: 1, name: item.label })).toBeTruthy()
       expect(within(main).getByRole('link', { name: item.label }).getAttribute('aria-current')).toBe('page')
-      expect(document.title).toBe(`${item.label} - NeuroRoute`)
+      await waitFor(() => expect(document.title).toBe(`${item.label} - NeuroRoute`))
       expect(within(screen.getByRole('navigation', { name: 'Breadcrumb' })).getByText(item.label).getAttribute('aria-current')).toBe('page')
+      expect((document.querySelector('.dock__pill') as HTMLElement).style.transform).toBe(`translateX(${i * 100}%)`)
       expect(screen.getByRole('banner')).toBe(banner) // same DOM node: the shell was not rebuilt
       expect(screen.getAllByRole('main')).toHaveLength(1)
       expect(screen.getAllByRole('navigation', { name: 'Main' })).toHaveLength(1)
@@ -77,7 +79,7 @@ describe('navigation smoke tests', () => {
   it('tolerates a trailing slash', async () => {
     renderApp('/topology/')
     expect(await screen.findByRole('heading', { level: 1, name: 'Topology Studio' })).toBeTruthy()
-    expect(document.title).toBe('Topology Studio - NeuroRoute')
+    await waitFor(() => expect(document.title).toBe('Topology Studio - NeuroRoute'))
   })
 
   it('shows a not-found page inside the shell for unknown addresses', async () => {
@@ -87,11 +89,17 @@ describe('navigation smoke tests', () => {
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy()
   })
 
+  it('shows a loading state, not a blank page, while the lazy sign-in route loads', async () => {
+    renderApp('/login')
+    expect(screen.getByRole('status').textContent).toContain('Loading page')
+    expect(await screen.findByRole('heading', { name: 'Test login' })).toBeTruthy()
+  })
+
   it('lazy-loads the sign-in page inside the shell', async () => {
     renderApp('/login')
     expect(await screen.findByRole('heading', { name: 'Test login' })).toBeTruthy()
     expect(screen.getByRole('banner')).toBeTruthy()
-    expect(document.title).toBe('Sign in - NeuroRoute')
+    await waitFor(() => expect(document.title).toBe('Sign in - NeuroRoute'))
   })
 })
 

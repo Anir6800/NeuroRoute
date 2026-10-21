@@ -5,11 +5,13 @@ import { ScreenState, type ScreenStatus } from '../components/ui/ScreenState'
 export function Topology({ status = 'empty' }: { status?: ScreenStatus }) {
   return (
     <>
-      <PageHeader title="Topology Studio" description="View and validate the network scenario that experiments run on." />
+      <PageHeader title="Topology Studio"
+        icon="topology" description="View and validate the network scenario that experiments run on." />
       <ScreenState
         status={status}
         loadingLabel="Loading scenario"
         empty={{
+          icon: 'topology',
           title: 'No scenario loaded',
           description:
             'Scenario files live in experiments/configs/. Loading them needs a scenario API that has not been built yet.',

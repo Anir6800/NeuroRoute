@@ -65,3 +65,8 @@
 ## 2026-10-22 (NR-D2-S08)
 - Five screen skeletons + router. All content is empty-state text; no data layer exists, so `status` is a prop defaulting to `empty` (used by tests and future wiring), not real state.
 - Risks: pages will need real data hooks (loading/error are only exercised in tests); shell not seen visually; `/login` chunk is lazy, so a slow network shows a blank content area briefly (no Suspense fallback beyond React Router's default).
+
+## 2026-10-22 (UI-FIX-01)
+- Navigation is now a bottom pill dock everywhere; the Stitch sidebar is gone from the implementation (docs say so). Pages still show empty states only.
+- Risks: animations are judged from code and static shots only; the dock has 5 fixed slots (a sixth destination needs the width formula revisited); `scripts/ui-audit.mjs` assumes Chrome and the dev stack; the icon set is hand-drawn.
+- Process lesson: a check that cannot fail is worse than none. The audit's overflow check hid itself behind mobile emulation until a mutation exposed it.

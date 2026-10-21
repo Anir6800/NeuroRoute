@@ -73,7 +73,8 @@ def test_component_css_uses_tokens_not_raw_colors() -> None:
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
     assert not HEX.findall(css), HEX.findall(css)
     assert not RAW_COLOR_FN.findall(css)
-    for token in ("--color-bg", "--glass-bg", "--layout-sidebar-width", "--layout-topbar-height", "--radius-surface"):
+    for token in ("--glass-bg", "--layout-dock-item-width", "--layout-dock-height", "--layout-topbar-height",
+                  "--radius-full", "--radius-surface", "--color-accent-soft", "--motion-spring"):
         assert f"var({token})" in css, token
 
 
@@ -82,3 +83,11 @@ def test_components_do_not_hard_code_colors_inline() -> None:
         text = path.read_text(encoding="utf-8")
         assert not HEX.findall(text), path
         assert not RAW_COLOR_FN.findall(text), path
+
+
+def test_favicon_exists_locally_and_is_linked() -> None:
+    # Regression: /favicon.ico used to 404 on every page load (console error).
+    html = (FRONTEND / "index.html").read_text(encoding="utf-8")
+    assert 'rel="icon"' in html and 'href="/favicon.svg"' in html
+    svg = (FRONTEND / "public" / "favicon.svg").read_text(encoding="utf-8")
+    assert "<image" not in svg and "href=" not in svg and "@import" not in svg  # self-contained, nothing remote

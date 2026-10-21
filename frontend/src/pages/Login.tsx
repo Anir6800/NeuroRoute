@@ -1,6 +1,8 @@
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useState, type FormEvent } from 'react'
 import { fetchMe, type MeResult } from '../api/me'
+import { Card } from '../components/ui/Card'
+import { PageHeader } from '../components/ui/PageHeader'
 import { auth } from '../lib/firebase'
 
 export function Login() {
@@ -26,43 +28,45 @@ export function Login() {
   }
 
   return (
-    <section className="card">
-      <h1>Test login</h1>
-      <p style={{ color: 'var(--color-muted)' }}>Local Firebase Auth emulator only.</p>
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 'var(--space)', maxWidth: 320 }}>
-        <label>
-          Email
-          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        <button type="submit" disabled={busy}>
-          {busy ? 'Signing in...' : 'Sign in'}
-        </button>
-      </form>
-      {authError && (
-        <p role="alert" style={{ color: 'var(--color-error)' }}>
-          {authError}
-        </p>
-      )}
-      {result?.ok && (
-        <p role="status" style={{ color: 'var(--color-ok)' }}>
-          Signed in as {result.data.email ?? result.data.uid} (role: {result.data.role})
-        </p>
-      )}
-      {result && !result.ok && (
-        <p role="alert" style={{ color: 'var(--color-error)' }}>
-          /me rejected: {result.error}
-        </p>
-      )}
-    </section>
+    <>
+      <PageHeader title="Test login" description="Local Firebase Auth emulator only." />
+      <Card>
+        <form onSubmit={onSubmit} className="form">
+          <label className="field">
+            Email
+            <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <label className="field">
+            Password
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+          <button type="submit" className="btn btn--primary" disabled={busy}>
+            {busy ? 'Signing in...' : 'Sign in'}
+          </button>
+        </form>
+        {authError && (
+          <p role="alert" className="msg msg--error">
+            {authError}
+          </p>
+        )}
+        {result?.ok && (
+          <p role="status" className="msg msg--ok">
+            Signed in as {result.data.email ?? result.data.uid} (role: {result.data.role})
+          </p>
+        )}
+        {result && !result.ok && (
+          <p role="alert" className="msg msg--error">
+            /me rejected: {result.error}
+          </p>
+        )}
+      </Card>
+    </>
   )
 }

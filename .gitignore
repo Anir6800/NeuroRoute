@@ -37,3 +37,9 @@ tensorboard/
 # Stitch: MCP config may contain an API key; exported HTML pulls CDN assets (reference only)
 .mcp.json
 design/stitch/screens/**/*.html
+
+# UI audit output (screenshots, audit.json)
+.ui-audit/
+
+# UI audit output (screenshots, audit.json)
+.ui-audit/

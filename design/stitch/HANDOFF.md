@@ -21,6 +21,8 @@ Source project: **"AI Network Design System"** (`projects/11953126075048924226`)
 
 Local specs written so far: [Overview](screens/overview.md) (from the Research Workspace Overview screen), [Topology Studio](screens/topology-studio.md), [Training Lab](screens/training-lab.md), [Experiments](screens/experiments.md), [Model Comparison](screens/model-comparison.md) (also holds the cross-screen continuity comparison). Convention: one spec file `design/stitch/screens/<slug>.md` per screen (layout, states, token references, data honesty; use `overview.md` as the model); the optional `<slug>/` folder below holds the screenshot and local-only HTML.
 
+**Implementation note (2026-10-22):** the shipped shell uses a floating **bottom pill dock** instead of the Stitch sidebar, at the owner's request. Screen specs that mention the sidebar describe the Stitch design, not the implementation.
+
 ## Steps
 
 1. **Open** the project in Stitch (web) and select a screen.

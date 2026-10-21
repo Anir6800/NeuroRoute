@@ -76,7 +76,9 @@ def test_hex_colors_are_valid() -> None:
 
 
 def test_every_css_variable_used_by_the_frontend_is_defined() -> None:
-    defined = set(re.findall(r"--([a-z0-9-]+)\s*:", CSS))
+    # tokens.css defines the design tokens; global.css may declare component-local custom properties (e.g. --dock-w)
+    global_css = (ROOT / "frontend" / "src" / "styles" / "global.css").read_text(encoding="utf-8")
+    defined = set(re.findall(r"--([a-z0-9-]+)\s*:", CSS + global_css))
     used: set[str] = set()
     for path in (ROOT / "frontend" / "src").rglob("*"):
         if path.suffix in {".tsx", ".ts", ".css"} and path.name != "tokens.css":

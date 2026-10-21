@@ -56,9 +56,10 @@ def shared_vars(t: dict) -> list[str]:
     rows += [("shadow", "var(--shadow-low)")]
     m = t["motion"]
     rows += [("motion-fast", m["duration"]["fast"]), ("motion-live", m["duration"]["live"]),
-             ("motion-ease", m["easing"]), ("motion-press-scale", m["press_scale"]),
+             ("motion-ease", m["easing"]), ("motion-spring", m["easing_spring"]), ("motion-press-scale", m["press_scale"]),
              ("focus-ring", t["layout"]["focus_ring"]),
-             ("layout-sidebar-width", t["layout"]["sidebar_width"]),
+             ("layout-dock-item-width", t["layout"]["dock_item_width"]),
+             ("layout-dock-height", t["layout"]["dock_height"]),
              ("layout-topbar-height", t["layout"]["topbar_height"]),
              ("layout-content-max", t["layout"]["content_max"])]
     return [f"  --{k}: {v};" for k, v in rows]

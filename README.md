@@ -103,14 +103,18 @@ Tests: `cd backend; ..\.venv\Scripts\python -m pytest -q`. The scenario tests al
 
 ## Frontend structure
 
-- `frontend/src/components/layout/`: `AppShell` (sidebar, top bar, skip link, main landmark; every route renders inside it), `Sidebar`, `TopBar` (breadcrumb from the route, live backend status pill, theme toggle, sign-in link), `ThemeToggle`, `BackendPill`.
+- `frontend/src/components/layout/`: `AppShell` (top bar, bottom dock, skip link, main landmark, scroll restoration; every route renders inside it), `Dock` (floating pill-shaped bottom navigation; the highlight slides to the active item), `TopBar` (brand link, breadcrumb from the route, live backend status pill, theme toggle, sign-in), `ThemeToggle`, `BackendPill`.
 - `frontend/src/components/ui/`: accessible primitives: `Button` (`disabledReason` keeps it focusable, ignores clicks, shows the reason as text), `Card` (glass surface), `StatusPill` (glyph + text, never color alone), `EmptyState` / `ErrorState` / `LoadingState`, `ScreenState` (loading / empty / error / ready in one place), `PageHeader`, `Icon` (inline SVG; no icon font).
 - `frontend/src/styles/tokens.css` (generated from `design/tokens.json`) and `global.css` (shell and primitives; token variables only, no raw colors; tested).
 - `frontend/src/app/router.tsx`: the route table (`routes`, reused by tests) and `createAppRouter()`. MVP routes, all inside `AppShell`: `/` Overview, `/topology` Topology Studio, `/training` Training Lab, `/experiments` Experiments, `/comparison` Model Comparison; plus `/login` (lazy-loaded, so the Firebase SDK is not in the main bundle) and a not-found route. `frontend/src/pages/` holds one component per screen.
 - Screens are **skeletons**: each renders loading / empty / error through `ScreenState` and defaults to an honest empty state with disabled actions that state why (no simulator, trainer, scenario API or run history exists yet). No sample data is shown as real; a test fails if any Stitch sample value appears.
-- `frontend/src/app/navigation.ts`: single source for sidebar items, breadcrumbs and document titles (a test keeps it in sync with the router). `frontend/src/lib/theme.ts`: theme hook.
-- Theme: dark by default; follows the OS until you press the toggle; the choice is saved in `localStorage` (`neuroroute.theme`) and applied before first paint. Narrow windows (< 768 px) turn the sidebar into a drawer (an adaptation: Stitch drew desktop only).
+- `frontend/src/app/navigation.ts`: single source for dock items, breadcrumbs and document titles (a test keeps it in sync with the router). `frontend/src/lib/theme.ts`: theme hook.
+- Theme: dark by default; follows the OS until you press the toggle; the choice is saved in `localStorage` (`neuroroute.theme`) and applied before first paint. Motion: pages fade/rise in (staggered), the dock pill slides with a spring easing, buttons lift and press; all of it is switched off under `prefers-reduced-motion`. Navigation is a bottom pill dock at every width (icons only below 480 px); this replaces the Stitch sidebar at the owner's request (the Stitch specs are unchanged). A local `favicon.svg` is served from `frontend/public/`.
 - No hosted assets: no CDN, fonts or icon fonts (fallback font stack). The Firebase SDK bundle contains Google API host names as library constants; `connectAuthEmulator` points auth at `127.0.0.1:9099` (checked by test; not verified with a network capture).
+
+## UI audit (real browser)
+
+`node scripts/ui-audit.mjs` (needs the dev stack and Chrome; `CHROME_PATH` overrides the Windows default; no extra dependencies) drives headless Chrome over the DevTools Protocol at 320 / 360 / 390 / 768 / 1440 px in light and dark and fails (exit 1) on: horizontal overflow, console errors or warnings, a stray menu button, a missing shell, or a broken dock click (wrong route, title, pill position, focus not on `main`, scroll not reset, theme toggle not persisted). Screenshots land in `.ui-audit/` (git-ignored). It has been checked against an injected layout bug, so a pass means something.
 
 ## Git workflow
 

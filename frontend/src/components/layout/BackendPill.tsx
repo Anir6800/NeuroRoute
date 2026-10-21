@@ -21,7 +21,9 @@ export function BackendPill({ check = defaultCheck }: { check?: () => Promise<He
   return (
     <span role="status" aria-live="polite">
       {!result ? (
-        <StatusPill status="neutral">Backend: checking</StatusPill>
+        <StatusPill status="neutral" pulse>
+          Backend: checking
+        </StatusPill>
       ) : result.ok ? (
         <StatusPill status="healthy">Backend ok</StatusPill>
       ) : (

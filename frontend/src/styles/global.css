@@ -33,10 +33,14 @@
 }
 
 /* ---- shell ---- */
-.shell__body {
-  margin-left: var(--layout-sidebar-width);
+.shell {
   min-height: 100vh;
-  background: var(--color-surface);
+  /* soft ambient glow from the accent; static, so no cost and nothing to animate away */
+  background-color: var(--color-surface);
+  background-image:
+    radial-gradient(60rem 30rem at 85% -10%, var(--color-accent-soft), transparent 70%),
+    radial-gradient(44rem 26rem at -5% 105%, var(--color-accent-soft), transparent 70%);
+  background-attachment: fixed;
 }
 .shell__main {
   outline: none;
@@ -44,78 +48,11 @@
 .shell__content {
   max-width: var(--layout-content-max);
   margin: 0 auto;
-  padding: var(--space-xl);
+  padding: var(--space-xl) var(--space-xl) calc(var(--layout-dock-height) + var(--space-3xl));
+}
+.page {
   display: grid;
   gap: var(--space-lg);
-}
-
-.sidebar {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 40;
-  width: var(--layout-sidebar-width);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
-  padding: var(--space-lg);
-  background: var(--color-bg);
-  border-right: 1px solid var(--color-border);
-}
-.sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-.sidebar__brand strong {
-  display: block;
-  font-size: var(--type-headline-sm-size);
-  line-height: var(--type-headline-sm-line);
-}
-.sidebar__sub {
-  display: block;
-  color: var(--color-muted);
-  font-size: var(--type-body-sm-size);
-  line-height: var(--type-body-sm-line);
-}
-.sidebar__logo {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-control);
-  background: var(--color-accent-soft);
-  color: var(--color-accent-text);
-}
-.sidebar ul {
-  display: grid;
-  gap: var(--space-xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.sidebar__link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-control);
-  color: var(--color-muted);
-  text-decoration: none;
-  transition: background var(--motion-fast) var(--motion-ease);
-}
-.sidebar__link:hover {
-  background: var(--color-hover);
-  color: var(--color-text);
-}
-.sidebar__link[aria-current='page'] {
-  background: var(--color-accent-soft);
-  color: var(--color-accent-text);
-  font-weight: 600;
-}
-.sidebar__foot {
-  margin: auto 0 0;
-  color: var(--color-muted);
-  font-size: var(--type-body-sm-size);
 }
 
 .topbar {
@@ -132,22 +69,15 @@
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
   border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-low);
 }
-.topbar__left,
 .topbar__right {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-}
-.topbar__menu {
-  display: none;
-}
-.topbar__signin {
-  color: var(--color-accent-text);
+  gap: var(--space-sm);
 }
 .crumbs {
   display: flex;
+  align-items: center;
   gap: var(--space-sm);
   margin: 0;
   padding: 0;
@@ -157,45 +87,184 @@
 .crumbs li + li::before {
   content: '/';
   margin-right: var(--space-sm);
+  color: var(--color-border);
 }
 .crumbs [aria-current='page'] {
   color: var(--color-text);
   font-weight: 600;
 }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+}
+.brand__logo {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  transition: transform var(--motion-live) var(--motion-spring);
+}
+.brand:hover .brand__logo {
+  transform: rotate(-8deg) scale(1.06);
+}
 
-/* Below the tablet breakpoint (768px, see tokens.json layout.breakpoint) the sidebar becomes a drawer.
-   Not drawn in Stitch; adapted here so the shell is usable on a narrow window. */
+/* ---- bottom pill dock ---- */
+.dock {
+  --dock-w: min(var(--layout-dock-item-width), calc((100vw - 2 * var(--space-lg) - 2 * var(--space-sm)) / 5));
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+  z-index: 50;
+  transform: translateX(-50%);
+  padding: var(--space-sm);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-high);
+  animation: dock-enter calc(var(--motion-live) * 2) var(--motion-spring) both;
+}
+.dock__track {
+  position: relative;
+}
+.dock__list {
+  position: relative;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dock__pill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--dock-w);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  background: var(--color-accent-soft);
+  transition: transform calc(var(--motion-live) * 1.8) var(--motion-spring);
+}
+.dock__link {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: var(--dock-w);
+  height: calc(var(--layout-dock-height) - 2 * var(--space-sm));
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: color var(--motion-fast) var(--motion-ease);
+}
+.dock__link svg {
+  transition: transform var(--motion-live) var(--motion-spring);
+}
+.dock__link:hover {
+  color: var(--color-text);
+}
+.dock__link:hover svg {
+  transform: translateY(-2px) scale(1.1);
+}
+.dock__link[aria-current='page'] {
+  color: var(--color-accent-text);
+}
+.dock__label {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  font-weight: 500;
+}
+
+/* ---- motion ---- */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes dock-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 24px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* children rise one after another, so the page builds up instead of popping in */
+.page > * {
+  animation: page-enter calc(var(--motion-live) * 1.6) var(--motion-ease) both;
+}
+.page > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.page > :nth-child(3) {
+  animation-delay: 120ms;
+}
+.page > :nth-child(n + 4) {
+  animation-delay: 180ms;
+}
+.pill--pulse .pill__glyph {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.spinner {
+  animation: spin 800ms linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page > *,
+  .dock,
+  .pill--pulse .pill__glyph,
+  .spinner {
+    animation: none;
+  }
+  .dock__pill,
+  .dock__link svg,
+  .brand__logo {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px) {
-  .shell__body {
-    margin-left: 0;
-  }
-  .shell__content {
-    padding: var(--space-lg);
-  }
   .topbar {
     padding: 0 var(--space-lg);
   }
-  .topbar__menu {
-    display: inline-flex;
+  .shell__content {
+    padding: var(--space-lg) var(--space-lg) calc(var(--layout-dock-height) + var(--space-3xl));
   }
-  .sidebar {
-    transform: translateX(-100%);
-    visibility: hidden;
-    transition:
-      transform var(--motion-live) var(--motion-ease),
-      visibility var(--motion-live);
+  .crumbs li + li {
+    display: none; /* the page title is already in the heading below; keep the bar compact */
   }
-  .sidebar.is-open {
-    transform: none;
-    visibility: visible;
-    box-shadow: var(--shadow-high);
+}
+@media (max-width: 479px) {
+  .dock__label {
+    display: none;
   }
-  .shell__scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 35;
-    background: var(--color-bg);
-    opacity: 0.6;
+  .brand__name {
+    display: none; /* keep the logo (it links home) so pill, theme toggle and sign-in all fit */
   }
 }
 
@@ -209,13 +278,25 @@
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-sm);
   min-height: 36px;
   font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    background var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
 }
 .btn--icon {
-  justify-content: center;
   padding: var(--space-sm);
+}
+.btn--icon svg {
+  transition: transform var(--motion-live) var(--motion-spring);
+}
+.btn--icon:hover svg {
+  transform: rotate(20deg);
 }
 /* Filled brand buttons would put light text on the brand color (4.12:1, below AA for small text),
    so primary is tinted with accent text instead. */
@@ -229,6 +310,9 @@
   border-color: transparent;
   color: var(--color-muted);
 }
+.btn--ghost[aria-current='page'] {
+  color: var(--color-accent-text);
+}
 .btn--danger {
   background: transparent;
   border-color: var(--status-critical);
@@ -237,10 +321,18 @@
 .btn:hover:not([aria-disabled='true']):not(:disabled) {
   background: var(--color-hover);
   color: var(--color-text);
+  transform: translateY(-1px);
 }
+.btn--primary:hover:not([aria-disabled='true']):not(:disabled) {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  border-color: var(--color-accent-text);
+}
+/* Unavailable controls get a dashed outline so they read as "off", not just faded. */
 .btn[aria-disabled='true'],
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
+  border-style: dashed;
   cursor: not-allowed;
 }
 .btn[aria-disabled='true']:active,
@@ -260,11 +352,12 @@
   gap: var(--space-xs);
   padding: 2px var(--space-sm);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-full);
   color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: var(--type-code-md-size);
   line-height: var(--type-code-md-line);
+  white-space: nowrap;
 }
 .pill--healthy {
   color: var(--color-ok);
@@ -292,6 +385,22 @@
   justify-content: space-between;
   gap: var(--space-lg);
 }
+.page-header__main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+.page-header__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-surface);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
 .page-header h1 {
   margin: 0;
   font-size: var(--type-headline-lg-size);
@@ -310,12 +419,32 @@
 }
 
 .state {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--shadow-low);
+}
+.state__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-surface);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+.state__body {
   display: grid;
   justify-items: start;
   gap: var(--space-md);
-  padding: var(--space-xl);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-surface);
+  min-width: 0;
 }
 .state__title {
   margin: 0;
@@ -328,16 +457,13 @@
   color: var(--color-muted);
 }
 .state--error {
-  border-style: solid;
   border-color: var(--status-critical);
 }
 .state--error .state__title {
   color: var(--color-error);
 }
 .state--loading {
-  grid-auto-flow: column;
   align-items: center;
-  border-style: solid;
 }
 .spinner {
   width: 16px;
@@ -345,15 +471,30 @@
   border: 2px solid var(--color-border);
   border-top-color: var(--color-accent);
   border-radius: 50%;
-  animation: spin 800ms linear infinite;
 }
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+
+.form {
+  display: grid;
+  gap: var(--space-lg);
+  max-width: 360px;
 }
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation: none;
-  }
+.field {
+  display: grid;
+  gap: var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--type-body-sm-size);
+}
+.field input {
+  width: 100%;
+  color: var(--color-text);
+  font-size: var(--type-body-md-size);
+}
+.msg {
+  margin: var(--space-lg) 0 0;
+}
+.msg--ok {
+  color: var(--color-ok);
+}
+.msg--error {
+  color: var(--color-error);
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { IconName } from './Icon'
 import { EmptyState, ErrorState, LoadingState } from './States'
 
 export type ScreenStatus = 'loading' | 'empty' | 'error' | 'ready'
@@ -6,7 +7,7 @@ export type ScreenStatus = 'loading' | 'empty' | 'error' | 'ready'
 interface Props {
   status: ScreenStatus
   loadingLabel?: string
-  empty: { title: string; description: string; action?: ReactNode }
+  empty: { title: string; description: string; icon?: IconName; action?: ReactNode }
   error?: { title?: string; message: string; onRetry?: () => void }
   children?: ReactNode
 }
@@ -20,7 +21,7 @@ export function ScreenState({ status, loadingLabel, empty, error, children }: Pr
       return <ErrorState {...(error ?? { message: 'Unknown error' })} />
     case 'empty':
       return (
-        <EmptyState title={empty.title} description={empty.description}>
+        <EmptyState title={empty.title} description={empty.description} icon={empty.icon}>
           {empty.action}
         </EmptyState>
       )

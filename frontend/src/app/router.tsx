@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
+import { LoadingState } from '../components/ui/States'
 import { Comparison } from '../pages/Comparison'
 import { Experiments } from '../pages/Experiments'
 import { NotFound } from '../pages/NotFound'
@@ -11,6 +12,8 @@ import { Training } from '../pages/Training'
 export const routes: RouteObject[] = [
   {
     element: <AppShell />,
+    // Shown while a lazy route (sign in) loads on a direct visit; otherwise the page would be blank.
+    hydrateFallbackElement: <LoadingState label="Loading page" />,
     children: [
       { index: true, element: <Overview /> },
       { path: 'topology', element: <Topology /> },

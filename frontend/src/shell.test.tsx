@@ -1,21 +1,25 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BackendPill } from './components/layout/BackendPill'
+import { NAV_ITEMS } from './app/navigation'
 import { AppShell } from './components/layout/AppShell'
+import { BackendPill } from './components/layout/BackendPill'
 
 function renderShell(path = '/') {
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route index element={<h1>Home page</h1>} />
-          <Route path="login" element={<h1>Login page</h1>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+  const router = createMemoryRouter(
+    [
+      {
+        element: <AppShell />,
+        children: [
+          { index: true, element: <h1>Home page</h1> },
+          { path: 'login', element: <h1>Login page</h1> },
+        ],
+      },
+    ],
+    { initialEntries: [path] },
   )
+  return render(<RouterProvider router={router} />)
 }
 
 beforeEach(() => {
@@ -39,32 +43,59 @@ describe('AppShell', () => {
     expect(crumb.getAttribute('aria-current')).toBe('page')
   })
 
-  it('marks the active sidebar link with aria-current', () => {
-    renderShell()
-    const link = within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'Overview' })
-    expect(link.getAttribute('aria-current')).toBe('page')
-  })
-
   it('sets the document title from the route', () => {
     renderShell('/login')
     expect(document.title).toBe('Sign in - NeuroRoute')
   })
 
-  it('moves focus to main when navigating, but not on first render', () => {
+  it('moves focus to main when navigating, but not on first render', async () => {
     renderShell()
     expect(document.activeElement).not.toBe(screen.getByRole('main'))
     fireEvent.click(screen.getByRole('link', { name: 'Sign in' }))
-    expect(document.activeElement).toBe(screen.getByRole('main'))
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('main')))
   })
 
-  it('toggles the mobile navigation drawer and closes it on navigation', () => {
+  it('replays the enter animation by remounting the page wrapper on navigation', async () => {
     renderShell()
-    const menu = screen.getByRole('button', { name: 'Open navigation' })
-    expect(menu.getAttribute('aria-expanded')).toBe('false')
-    fireEvent.click(menu)
-    expect(screen.getByRole('button', { name: 'Close navigation' }).getAttribute('aria-expanded')).toBe('true')
+    const before = document.querySelector('.page')
+    expect(before).not.toBeNull()
     fireEvent.click(screen.getByRole('link', { name: 'Sign in' }))
-    expect(screen.getByRole('button', { name: 'Open navigation' }).getAttribute('aria-expanded')).toBe('false')
+    await screen.findByRole('heading', { name: 'Login page' })
+    expect(document.querySelector('.page')).not.toBe(before)
+  })
+
+  it('has no hamburger/drawer button: navigation is the always-visible dock (regression)', () => {
+    renderShell()
+    expect(screen.queryByRole('button', { name: /navigation/i })).toBeNull()
+    expect(document.querySelector('.sidebar, .topbar__menu, .shell__scrim')).toBeNull()
+  })
+
+  it('keeps the brand link named even when its text is hidden on narrow screens', () => {
+    renderShell()
+    expect(screen.getByRole('link', { name: 'NeuroRoute home' }).getAttribute('href')).toBe('/')
+  })
+})
+
+describe('bottom pill dock', () => {
+  it('lists every destination by its full name, in order', () => {
+    renderShell()
+    const links = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link')
+    expect(links.map((l) => l.getAttribute('aria-label'))).toEqual(NAV_ITEMS.map((i) => i.label))
+    expect(links.map((l) => l.textContent)).toEqual(NAV_ITEMS.map((i) => i.short))
+  })
+
+  it('marks the active item and places the sliding pill under it', () => {
+    renderShell()
+    const links = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link')
+    expect(links[0].getAttribute('aria-current')).toBe('page')
+    expect((document.querySelector('.dock__pill') as HTMLElement).style.transform).toBe('translateX(0%)')
+  })
+
+  it('hides the pill on pages outside the dock (sign in, not found)', () => {
+    renderShell('/login')
+    expect(document.querySelector('.dock__pill')).toBeNull()
+    const links = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link')
+    expect(links.every((l) => l.getAttribute('aria-current') === null)).toBe(true)
   })
 })
 

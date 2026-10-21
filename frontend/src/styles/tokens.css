@@ -109,9 +109,11 @@
   --motion-fast: 120ms;
   --motion-live: 180ms;
   --motion-ease: ease-out;
+  --motion-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
   --motion-press-scale: 0.985;
   --focus-ring: 0 0 0 2px rgba(105, 116, 217, 0.2);
-  --layout-sidebar-width: 248px;
+  --layout-dock-item-width: 88px;
+  --layout-dock-height: 64px;
   --layout-topbar-height: 64px;
   --layout-content-max: 1680px;
 }

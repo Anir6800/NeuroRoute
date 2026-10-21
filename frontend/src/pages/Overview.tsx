@@ -10,6 +10,7 @@ export function Overview({ status = 'empty' }: { status?: ScreenStatus }) {
     <>
       <PageHeader
         title="Overview"
+        icon="overview"
         description="Local research console. Results appear here only after real runs exist."
         actions={
           <Button variant="primary" disabledReason="No simulator or trainer exists yet.">
@@ -25,6 +26,7 @@ export function Overview({ status = 'empty' }: { status?: ScreenStatus }) {
           status={status}
           loadingLabel="Loading results"
           empty={{
+            icon: 'experiments',
             title: 'No experiments recorded yet',
             description:
               'Run an experiment to see latency, loss and comparisons here. Nothing is displayed until a real run exists.',

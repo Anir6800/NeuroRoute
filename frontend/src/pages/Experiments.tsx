@@ -7,6 +7,7 @@ export function Experiments({ status = 'empty' }: { status?: ScreenStatus }) {
     <>
       <PageHeader
         title="Experiments"
+        icon="experiments"
         description="Browse, filter and compare past runs."
         actions={<Button disabledReason="There are no runs to compare yet.">Compare selected</Button>}
       />
@@ -14,6 +15,7 @@ export function Experiments({ status = 'empty' }: { status?: ScreenStatus }) {
         status={status}
         loadingLabel="Loading runs"
         empty={{
+          icon: 'experiments',
           title: 'No experiments recorded yet',
           description: 'Run history appears here once experiments have been run. Search and filters stay off until then.',
         }}

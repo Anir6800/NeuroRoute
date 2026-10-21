@@ -1,12 +1,27 @@
 import type { ReactNode } from 'react'
 import { Button } from './Button'
+import { Icon, type IconName } from './Icon'
 
-export function EmptyState({ title, description, children }: { title: string; description: string; children?: ReactNode }) {
+interface EmptyProps {
+  title: string
+  description: string
+  icon?: IconName
+  children?: ReactNode
+}
+
+export function EmptyState({ title, description, icon, children }: EmptyProps) {
   return (
     <div className="state state--empty">
-      <h2 className="state__title">{title}</h2>
-      <p className="state__text">{description}</p>
-      {children}
+      {icon && (
+        <span className="state__icon" aria-hidden="true">
+          <Icon name={icon} size={24} />
+        </span>
+      )}
+      <div className="state__body">
+        <h2 className="state__title">{title}</h2>
+        <p className="state__text">{description}</p>
+        {children}
+      </div>
     </div>
   )
 }
@@ -14,9 +29,11 @@ export function EmptyState({ title, description, children }: { title: string; de
 export function ErrorState({ title = 'Something went wrong', message, onRetry }: { title?: string; message: string; onRetry?: () => void }) {
   return (
     <div className="state state--error" role="alert">
-      <h2 className="state__title">{title}</h2>
-      <p className="state__text">{message}</p>
-      {onRetry && <Button onClick={onRetry}>Try again</Button>}
+      <div className="state__body">
+        <h2 className="state__title">{title}</h2>
+        <p className="state__text">{message}</p>
+        {onRetry && <Button onClick={onRetry}>Try again</Button>}
+      </div>
     </div>
   )
 }
