@@ -73,3 +73,7 @@
 
 ## 2026-10-22 (UI-FIX-02)
 - Sign-in is a centered auth panel; centering math depends on the shell paddings and the dock height tokens (if either changes, `.auth` min-height must follow; the audit will flag drift).
+
+## 2026-10-22 (NR-D3-S01)
+- First model code. It is analytic and open-loop; its numbers are estimates, not measurements, and must be labelled simulated.
+- Risks: delay is conservative near saturation (see the error table); byte-identical results depend on the numpy version (golden digest test will flag a numpy upgrade that changes Poisson draws: re-verify, then update the digest and docs together); fixed-point convergence is empirical, not proven (flag recorded per step); Python loops over steps and flows are fine for the MVP but would need vectorising for very large scenarios.

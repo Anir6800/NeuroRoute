@@ -72,6 +72,16 @@ npm run typecheck; npm test; npm run build
 ```
 Dark is the default; light follows the OS (`prefers-color-scheme`) or `<html data-theme="light">`. Provenance: values come from the Stitch project "AI Network Design System"; the verbatim brief is in `design/stitch/MASTER_PROMPT.md` (the original master prompt was not supplied). Light-mode text/status-text colors are derived (marked in `tokens.json`) to meet WCAG AA. Known gap: white text on the indigo brand fill is 4.12:1 (teal 3.31:1), so use bold/large text on brand fills. Fonts (Inter, JetBrains Mono) are named but not bundled; system fallbacks apply.
 
+## Simulation (analytic, deterministic)
+
+`backend/research/simulation/engine.py` + `traffic.py` estimate per-link delay and loss from an M/M/1/K queue per link (propagation + transmission + queueing, blocking-probability loss), with multi-hop loss thinning, static shortest-path routing, failure events and unreachable-flow handling. Results are **simulated estimates, not measurements**, and the model has documented limits (no TCP, no bursts inside a step, no queue memory between steps): read [docs/sim_model.md](docs/sim_model.md) before using any number. Same scenario + seed + step gives byte-identical arrays (`result.digest()`), verified on Python 3.15 and 3.13.
+
+```python
+from research.simulation.engine import simulate
+result = simulate(scenario, step_s=1.0)   # from backend/, with a validated Scenario
+```
+Tests (analytic theory, determinism, disconnected graphs, rerouting): `cd backend; ..\.venv\Scripts\python -m pytest -q tests\test_simulation.py`.
+
 ## Auth (Firebase Auth emulator, local only)
 
 Project `demo-neuroroute`, emulator at `127.0.0.1:9099` (`firebase.json`, `.firebaserc`). No real Firebase project, hosting or credentials are used.
