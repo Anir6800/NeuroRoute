@@ -5,7 +5,7 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD e914092 (NR-D2-S01 commit) until the NR-D2-S02 commit, tree clean as of NR-D2-S02 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD f15e6c6 (NR-D2-S02 commit) until the NR-D2-S03 commit, tree clean as of NR-D2-S03 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
 - One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S01 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
@@ -125,3 +125,15 @@ Never log secrets here.
 - Scope: design/stitch/HANDOFF.md (manual export workflow, always available), docs/stitch-integration.md (optional MCP via supported editor, key safety, fallback). Facts to be verified from this environment (MCP server config with secrets REDACTED; read-only Stitch calls get_screen/list_screens) instead of guessed. No secrets, keys or tokens in the repo; .gitignore check for stitch/key files.
 - Planned paths: design/stitch/HANDOFF.md, docs/stitch-integration.md, README.md (link), .gitignore (if needed), tests (doc link/secret scan), docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: git status clean; root 49 passed, backend 50, frontend 12 (NR-D2-S01).
+
+### NR-D2-S03 — Design Overview in Stitch
+- Status: PARTIAL (local spec DONE; the exact prompt was not supplied and no new Stitch screen was generated: an existing Overview screen is the design). Intended commit: `neuroroute: design-overview-in-stitch`.
+- Verified: root `pytest -q tests` 60 passed on .venv (3.15) and .venv-rl (3.13); backend 50 passed; ruff clean; frontend typecheck 0 / 12 passed / build ok / lint 0. Stitch facts: screen 2439df6b... = Overview (nav "Overview", title "Adaptive Mesh Routing Evaluation", 3 state variants); b56f019e... "Lab Prototype" has byte-identical HTML (sha256 prefix 343bf2cf842b); bee8e955... Topology Studio HTML differs (65,765 vs 57,702 chars) so download_file is screen-specific.
+- Paths changed: design/stitch/screens/overview.md, tests/test_overview_spec.py, design/stitch/HANDOFF.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Decisions: describe the EXISTING screen instead of generating (write op on user's Stitch account); HTML not committed; tokens.json stays the source (Stitch uses YAML palette); every Stitch number treated as sample data with a per-element real-source table; Overview v1 = shell + /health + /me + empty state.
+- Limitations / needs user: original Overview prompt not provided; no screenshot captured; layout tokens (sidebar 248, topbar 64, content max 1680) not added; icon strategy undecided (Material Symbols is hosted); no tablet/mobile design exists; spec describes design only, no frontend code. Next: planner's next task (likely build shell/Overview v1 per spec section 6).
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD f15e6c6)
+- Finding: the "exact NeuroRoute Overview screen prompt" was NOT supplied. The Stitch project already contains screen "NeuroRoute AI - Research Workspace Overview" (projects/11953126075048924226/screens/2439df6b3eba4b949daa74db7b322d54, 2560x3764), so "Overview designs exist in Stitch" is satisfied by an existing design; no new screen generated (write op on user's Stitch account).
+- Scope: design/stitch/screens/overview.md = local spec derived from that screen's exported HTML (read-only download, analysed in scratch, HTML NOT committed): layout, sections, states, token references, placeholder-data warnings, gaps vs tokens.json. Plus notes in docs, tests for the spec (exists, token refs resolve), logs.
+- Planned paths: design/stitch/screens/overview.md, tests/test_overview_spec.py, design/stitch/HANDOFF.md (status link), docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; root 55 passed, backend 50, frontend 12 (NR-D2-S02).

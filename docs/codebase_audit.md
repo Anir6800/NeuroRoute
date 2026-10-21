@@ -41,3 +41,7 @@
 ## 2026-10-21 (NR-D2-S02)
 - Docs only plus a repo-wide secret-scan test (patterns: Google API key, X-Goog-Api-Key with value, private key block, oauth token, sk- key). The scan is pattern-based, not exhaustive.
 - Risk: the Stitch API key sits in plaintext in `~/.claude.json` (outside the repo); `.mcp.json` ignored as a safety net only.
+
+## 2026-10-22 (NR-D2-S03)
+- Spec only (no app code). Biggest risk: building from the Stitch screen would display fabricated metrics and non-existent hardware; spec section 5 maps each element to a real source or marks it blocked.
+- Overview v1 can use only /health and /me today; scenarios, runs, models and metrics have no backend yet.

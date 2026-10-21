@@ -64,3 +64,10 @@
 - Tests: root `pytest -q tests` 55 passed on `.venv` (3.15) and `.venv-rl` (3.13) (6 new: scanner self-test, repo-wide secret scan, manual workflow present, MCP/key-safety/fallback sections present, ignore rules, 10 screen ids); backend 50 passed; ruff clean; frontend typecheck 0, 12 passed, build ok, lint 0.
 - Not verified: Stitch web-UI export menu names, other editors' MCP setup screens, key restrictions/quotas. `claude mcp add` command form is from Claude Code docs, not re-run (server already configured).
 - No write-type Stitch tools were called; no screenshots/HTML committed.
+
+## NR-D2-S03 — Design Overview in Stitch (2026-10-21)
+- The "exact Overview screen prompt" was not supplied. The Stitch project already had "NeuroRoute AI - Research Workspace Overview" (`2439df6b...`), so no screen was generated (write op). Spec derived from that screen's exported HTML (read-only `download_file`, HTML not committed, sha256 prefix `343bf2cf842b`). "NeuroRoute AI Lab Prototype" (`b56f019e...`) returned byte-identical HTML (duplicate).
+- Created: `design/stitch/screens/overview.md` (layout table, states, token map, gaps, data-honesty table, first buildable slice), `tests/test_overview_spec.py`. Edited: `design/stitch/HANDOFF.md`.
+- Tests: root `pytest -q tests` 60 passed on `.venv` (3.15) and `.venv-rl` (3.13); backend 50 passed; ruff clean; frontend typecheck 0, 12 passed, build ok, lint 0.
+- Findings: Stitch HTML uses the YAML palette (#0f131b/#bdc2ff) not tokens.json (#10141C/#6974D9); all screen data is sample and references hardware this machine lacks (M3 Max/MPS/DPDK/PyTorch 2.3); only desktop designed (no tablet/mobile); loading/error/unauthenticated states missing; a11y attributes nearly absent (37 buttons, 1 aria); icons use hosted Material Symbols font; layout tokens (248px sidebar, 64px bar, 1680px max) not in tokens.json.
+- Not done: screenshot capture, new Stitch screen, adding layout tokens, any frontend implementation.
