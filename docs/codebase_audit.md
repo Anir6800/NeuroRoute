@@ -20,3 +20,7 @@
 ## 2026-10-21 (NR-D1-S05)
 - Frontend shell with typed, timeout-guarded health call and honest error state; tokens in styles/tokens.css. No dummy metrics.
 - Risk: Stitch design not yet imported; only a handful of tokens defined by hand. TypeScript 7 / Vite 8 are very new, watch for tooling breakage.
+
+## 2026-10-21 (NR-D1-S06)
+- First research-layer code: scenario contract with hash. Import direction app -> research verified by grep, not yet enforced by a test.
+- Risk: base_scenario values (capacities, demands) are illustrative inputs, not measurements; any future results must cite the config_hash that produced them.

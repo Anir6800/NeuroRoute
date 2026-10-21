@@ -29,3 +29,8 @@
 - Tests: `npm run typecheck` clean; `npm test` 7 passed; `npm run build` ok; live proxy `/api/health` -> 200 with backend JSON.
 - Skipped on purpose: firebase and unused libs (see run-local.md).
 - Open issues: no visual/browser check; preview server has no proxy; latest-version deps unpinned beyond the lockfile.
+
+## NR-D1-S06 — Create versioned scenario and contract schemas (2026-10-21)
+- Created: `backend/research/simulation/models.py`, `backend/app/schemas/topology.py`, `experiments/configs/base_scenario.json`, `backend/tests/test_scenario.py`, `backend/tests/test_topology_schema.py`. Edited: `README.md`. Installed jsonschema (both venvs), pydantic (.venv-rl).
+- Tests: `.venv` (3.15) 33 passed; `.venv-rl` (3.13) scenario tests 27 passed; ruff clean. Round trip (file -> model -> JSON -> model), JSON-Schema validation of the base file, 11 schema-visible invalid cases rejected by both schema and model, 10 cross-reference cases (incl. invalid edge) rejected by model, hash stable/order-insensitive/content-sensitive, same hash on both interpreters.
+- Open issues: cross-reference rules not expressible in JSON Schema; no service/route/loader yet.

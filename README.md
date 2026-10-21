@@ -53,6 +53,19 @@ npm run typecheck; npm test; npm run build
 ```
 `VITE_API_BASE_URL` (default `/api`) is documented in `frontend/.env.example`. Details: [docs/setup/run-local.md](docs/setup/run-local.md).
 
+## Scenario schema (v1.0)
+
+`backend/research/simulation/models.py` defines `Scenario` (pydantic, `extra="forbid"`, frozen). Example: `experiments/configs/base_scenario.json`.
+
+- Every link: `capacity_mbps > 0`, `prop_delay_ms >= 0`, `buffer_pkts > 0`, `weight >= 0`. Links are directed (a duplex cable = two links).
+- Scenario: `schema_version` ("1.0"), `seed`, `duration_s`, `traffic` (`cbr`/`poisson`, packet size), `nodes`, `links`, `flows`, `failures` (link `down`/`up` at `time_s`).
+- Validation: unique node/link/flow ids, endpoints exist, no self-loops, flows start before the end, failures reference real links within the duration, no NaN/Infinity.
+- `config_hash` = SHA-256 of canonical JSON (sorted keys, no whitespace, lists sorted by id), so reordering nodes/links does not change it. It is identical on Python 3.15 and 3.13.
+- `app/schemas/topology.py` re-exports it for the API (`app -> research` only). JSON Schema: `Scenario.model_json_schema()`.
+- These are inputs, not results. No metrics exist yet.
+
+Tests: `cd backend; ..\.venv\Scripts\python -m pytest -q`. The scenario tests also run under `.venv-rl` (`pytest -q tests/test_scenario.py`); `test_health.py` needs fastapi, which is only in `.venv`.
+
 ## Git workflow
 
 - Branch: `main`. Local repo only; a remote is optional.

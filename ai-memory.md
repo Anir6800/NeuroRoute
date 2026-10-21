@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD 89329c3 (S04 commit) until the S05 commit, tree clean as of S05 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD dcc9169 (S05 commit) until the S06 commit, tree clean as of S06 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: NR-D1-S06; decide on Mininet in WSL.
+- Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: NR-D1-S07; decide on Mininet in WSL.
 
 ## Task Log
 
@@ -67,3 +67,14 @@ Never log secrets here.
 - Scope: Vite + React + TS in frontend/ (frontend/src had only .gitkeep, so scaffold into a scratchpad dir and copy; never overwrite). Router shell, API base URL from VITE_API_BASE_URL (default http://127.0.0.1:8001), dev server bound 127.0.0.1, docs/setup/run-local.md. Deliberately NOT installing firebase (no Firebase/hosting per constraints) nor unused libs (@xyflow/react, recharts, zustand, react-query, axios, lucide-react): add when a task needs them.
 - Planned paths: frontend/{package.json,tsconfig*.json,vite.config.ts,index.html,.env.example,src/*}, docs/setup/run-local.md, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: git status clean; backend pytest 5 passed (S04); frontend has only src/.gitkeep.
+
+### NR-D1-S06 — Create versioned scenario and contract schemas
+- Status: DONE. Intended commit: `neuroroute: create-versioned-scenario-and-contract-schemas`.
+- Verified (from backend/): `.venv` 3.15 `pytest -q` -> 33 passed, 1 warning (httpx deprecation); `ruff check .` -> All checks passed; `.venv-rl` 3.13 `pytest -q tests/test_scenario.py` -> 27 passed. base_scenario config_hash = 3c7fbb89...989d, identical on both interpreters. `grep` confirms research/ imports nothing from app.
+- Paths changed: backend/research/simulation/models.py, backend/app/schemas/topology.py, experiments/configs/base_scenario.json, backend/tests/{test_scenario,test_topology_schema}.py, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md. Installed: jsonschema 4.26.0 in both venvs, pydantic 2.14.1 in .venv-rl.
+- Decisions: directed links; hash is order-insensitive via sorting by id; JSON Schema checked with jsonschema Draft 2020-12 for schema-expressible rules (unknown fields, non-positive capacity, etc.), cross-reference rules (duplicate ids, unknown endpoints, self-loop, failures) enforced by model only; config_hash is a property, not stored in the file.
+- Limitations: JSON Schema cannot express cross-reference rules; no loader/service/route for scenarios yet; traffic model has only kind+packet size; ids limited to [A-Za-z0-9_-]{1,32}. Next: S07 per planner.
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD dcc9169)
+- Scope: pydantic v2 models in backend/research/simulation/models.py (Node/Link/Flow/TrafficModel/FailureEvent/Scenario, extra=forbid, schema_version, seed, canonical SHA-256 config_hash); API contract wrapper backend/app/schemas/topology.py (app -> research import direction only); experiments/configs/base_scenario.json; tests in backend/tests/test_scenario.py incl. JSON-Schema round trip and invalid edges. Install pydantic + jsonschema into .venv-rl (pydantic missing there), jsonschema into .venv.
+- Planned paths: backend/research/simulation/models.py, backend/app/schemas/topology.py, experiments/configs/base_scenario.json, backend/tests/test_scenario.py, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; backend pytest 5 passed, root tests 22 passed, frontend 7 passed (S04/S05); pydantic only in .venv, jsonschema in neither.
