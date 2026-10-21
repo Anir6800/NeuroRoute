@@ -47,3 +47,6 @@
 - Verified: `bash -n` both scripts; check with stack down -> 5 FAIL, exit 1; `dev-neuro.sh` -> "NeuroRoute is up", seeded user; `check-neuro.sh` -> 5 ok, exit 0; listeners only on 127.0.0.1 (no 0.0.0.0/[::]); second start refused (3 ports busy, exit 1); `stop`, SIGTERM and crash paths leave no processes or listeners. Suites: backend 50 passed + ruff clean; root 22 passed; frontend typecheck 0, 12 passed, build ok, lint 0. User screenshot confirmed browser login at /login.
 - Bugs found while testing and fixed: idle loop kept running after `stop` (first fix read the deleted pids file; final fix tracks PIDs in a bash array).
 - Open issues: fresh-laptop setup (venv + installs) documented but not re-run from a clean machine; scripts need Git Bash/bash on Windows; no shellcheck available; Java requirement for the Auth emulator untested without Java.
+
+## NR-D1-S08 follow-up — WSL bash pitfall (2026-10-21)
+- User ran `bash scripts/dev-neuro.sh` in cmd and got "missing: node / java": cmd's `bash` is WSL, not Git Bash. Added WSL detection in `scripts/dev-neuro.sh`; documented the Git Bash full-path command in `docs/setup/run-local.md` and README. Verified from PowerShell with `"C:\Program Files\Git\bin\bash.exe" scripts/dev-neuro.sh`: up, 5 checks ok, `stop` clean, ports free.

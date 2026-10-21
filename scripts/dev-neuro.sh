@@ -5,6 +5,12 @@
 #   scripts/dev-neuro.sh stop     stop leftovers recorded in .dev-logs/pids
 set -u
 cd "$(dirname "$0")/.."
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  echo "This is WSL bash (plain 'bash' in cmd/PowerShell), which lacks the Windows node/java/venv." >&2
+  echo "Use Git Bash instead, or from cmd/PowerShell:" >&2
+  echo '  "C:\Program Files\Git\bin\bash.exe" scripts/dev-neuro.sh' >&2
+  exit 1
+fi
 LOGS=.dev-logs
 PIDS=$LOGS/pids
 mkdir -p "$LOGS"

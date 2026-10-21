@@ -17,7 +17,12 @@ The RL environment (`.venv-rl`, Python 3.13 with torch) is only needed for train
 
 ## One command
 
-From the repository root, in Git Bash (or `bash scripts/dev-neuro.sh` from anywhere):
+From the repository root in **Git Bash** (Start menu -> "Git Bash"). From cmd or PowerShell use Git's bash by full path, because plain `bash` there is WSL's, which has no Windows node/java and is rejected by the script:
+
+```
+"C:\Program Files\Git\bin\bash.exe" scripts/dev-neuro.sh
+```
+Then:
 
 ```bash
 scripts/dev-neuro.sh        # starts everything, Ctrl-C stops everything
@@ -55,6 +60,7 @@ Browser -> `/api/health` -> Vite dev proxy -> `http://127.0.0.1:8001/health`, so
 | `missing: firebase` / `java` | Install the Firebase CLI / Java; the script exits before starting anything. |
 | `FAILED: ... did not answer` | Read the matching file in `.dev-logs/`. |
 | Login page says "Sign-in failed" | Emulator not running or user not seeded; rerun `scripts/dev-neuro.sh`. |
+| `This is WSL bash` / `missing: node` / `missing: java` | You ran plain `bash` from cmd/PowerShell (WSL). Use Git Bash or the full `bash.exe` path above. |
 | `bad interpreter` / `\r` errors | CRLF in a script; `.gitattributes` forces LF for `*.sh`, re-checkout the file. |
 
 ## Not installed on purpose

@@ -8,7 +8,7 @@ Local-only research MVP for reinforcement-learning network routing: NetworkX top
 
 ```bash
 # once: see docs/setup/run-local.md (create .venv, pip/npm install, firebase-tools)
-scripts/dev-neuro.sh      # Git Bash: emulator + backend + frontend on 127.0.0.1, Ctrl-C stops all
+scripts/dev-neuro.sh      # in Git Bash (not WSL/plain `bash` from cmd): emulator + backend + frontend on 127.0.0.1, Ctrl-C stops all
 scripts/check-neuro.sh    # second terminal: health checks, exit 0 = all passed
 ```
 Open http://127.0.0.1:5173 (test login: `dev@neuroroute.test` / `devpass123`, emulator only). Full details and troubleshooting: [docs/setup/run-local.md](docs/setup/run-local.md).
