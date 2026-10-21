@@ -498,3 +498,117 @@
 .msg--error {
   color: var(--color-error);
 }
+
+/* ---- centered auth panel ---- */
+.page > .auth {
+  animation: none; /* the panel has its own entrance; avoid animating twice */
+}
+.auth {
+  display: grid;
+  place-items: center;
+  /* the area between the top bar and the dock: viewport minus bar, content padding and dock zone */
+  min-height: calc(100vh - var(--layout-topbar-height) - var(--space-xl) - var(--layout-dock-height) - var(--space-3xl));
+  min-height: calc(100dvh - var(--layout-topbar-height) - var(--space-xl) - var(--layout-dock-height) - var(--space-3xl));
+}
+.auth__panel {
+  display: grid;
+  gap: var(--space-xl);
+  width: min(100%, 420px);
+  animation: auth-enter calc(var(--motion-live) * 2.4) var(--motion-spring) both;
+}
+.auth__panel > * {
+  animation: auth-rise calc(var(--motion-live) * 1.8) var(--motion-ease) both;
+}
+.auth__panel > :nth-child(1) {
+  animation-delay: 80ms;
+}
+.auth__panel > :nth-child(2) {
+  animation-delay: 170ms;
+}
+.auth__intro {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+}
+.auth__intro h1 {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--type-headline-lg-size);
+  line-height: var(--type-headline-lg-line);
+  letter-spacing: var(--type-headline-lg-tracking);
+}
+.auth__intro p {
+  margin: 0;
+  color: var(--color-muted);
+}
+.auth__logo {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-overlay);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  box-shadow: var(--shadow-high);
+  animation: float 4.5s ease-in-out infinite;
+}
+.auth .form {
+  max-width: none;
+}
+.field input {
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
+}
+.field input:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: var(--focus-ring);
+}
+.msg--error {
+  animation: shake calc(var(--motion-live) * 2.2) var(--motion-ease) both;
+}
+@keyframes auth-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth__panel,
+  .auth__panel > *,
+  .auth__logo,
+  .msg--error {
+    animation: none;
+  }
+}

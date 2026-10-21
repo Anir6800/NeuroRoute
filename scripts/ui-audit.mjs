@@ -65,7 +65,9 @@ const metrics = (W) => `(() => { const d = document.documentElement; const q = (
   const vis = (s) => { const e = q(s); if (!e) return 'absent'; const cs = getComputedStyle(e); const r = e.getBoundingClientRect(); return cs.display === 'none' || cs.visibility === 'hidden' ? 'hidden' : Math.round(r.width) + 'x' + Math.round(r.height) + '@' + Math.round(r.left) + ',' + Math.round(r.top) };
   const overflow = [...document.querySelectorAll('body *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > ${W} + 1) && getComputedStyle(e).position !== 'fixed' }).slice(0, 4).map((e) => e.tagName + '.' + e.className);
   return JSON.stringify({ vw: innerWidth, scrollW: d.scrollWidth, hOverflow: Math.max(d.scrollWidth, innerWidth) > ${W} + 1, overflowers: overflow, theme: d.dataset.theme ?? '(none)', bg: getComputedStyle(document.body).backgroundColor,
-    topbar: vis('.topbar'), dock: vis('.dock'), pill: vis('.dock__pill'), hamburger: vis('.topbar__menu, [aria-label*="navigation" i]'), brandName: vis('.brand__name'), signin: vis('.topbar__right a'), h1: q('h1')?.textContent, title: document.title }) })()`
+    topbar: vis('.topbar'), dock: vis('.dock'), pill: vis('.dock__pill'), hamburger: vis('.topbar__menu, [aria-label*="navigation" i]'), brandName: vis('.brand__name'), signin: vis('.topbar__right a'), h1: q('h1')?.textContent, title: document.title,
+    auth: (() => { const p = q('.auth__panel'); if (!p) return null; const r = p.getBoundingClientRect(); const top = q('.topbar').getBoundingClientRect().bottom; const dock = q('.dock').getBoundingClientRect().top;
+      return { fits: r.height <= dock - top, offsetY: Math.round(r.top + r.height / 2 - (top + dock) / 2), offsetX: Math.round(r.left + r.width / 2 - ${W} / 2), width: Math.round(r.width), animation: getComputedStyle(p).animationName } })() }) })()`
 
 const report = []
 const scenarios = [
@@ -76,13 +78,17 @@ const scenarios = [
   { name: 'phone360-light-experiments', url: `${BASE}/experiments`, w: 360, h: 740, mobile: true, scheme: 'light' },
   { name: 'phone320-dark-comparison', url: `${BASE}/comparison`, w: 320, h: 640, mobile: true },
   { name: 'phone390-dark-login', url: `${BASE}/login`, w: 390, h: 844, mobile: true },
+  { name: 'desktop-dark-login', url: `${BASE}/login`, w: 1440, h: 900 },
+  { name: 'desktop-light-login-wide', url: `${BASE}/login`, w: 1920, h: 1080, scheme: 'light' },
+  { name: 'tablet-dark-login', url: `${BASE}/login`, w: 768, h: 1024, mobile: true },
+  { name: 'desktop-dark-login-reduced-motion', url: `${BASE}/login`, w: 1280, h: 720, reduced: true },
   { name: 'desktop-dark-404', url: `${BASE}/nope`, w: 1440, h: 700 },
 ]
 for (const s of scenarios) {
   await open(s.url, s)
   const m = JSON.parse(await evaluate(metrics(s.w)))
   await shot(s.name)
-  report.push({ scenario: s.name, ...m })
+  report.push({ scenario: s.name, reduced: Boolean(s.reduced), ...m })
 }
 
 // real-browser interaction: click every dock link, check URL, pill, focus, scroll reset, title
@@ -105,6 +111,11 @@ const failures = [
   ...report.filter((r) => r.topbar === 'absent' || r.dock === 'absent' || r.dock === 'hidden').map((r) => `shell missing: ${r.scenario}`),
   ...nav.filter((n) => !(n.focusIsMain && n.scrollY === 0 && n.title.startsWith(n.h1) && n.current === n.clicked)).map((n) => `navigation problem: ${JSON.stringify(n)}`),
   ...(theme.stored === theme.theme && theme.theme ? [] : [`theme toggle did not persist: ${JSON.stringify(theme)}`]),
+  // sign-in panel: centered horizontally always, vertically when it fits, animated unless reduced motion
+  ...report.filter((r) => r.auth && Math.abs(r.auth.offsetX) > 2).map((r) => `sign-in panel not horizontally centered: ${r.scenario} ${JSON.stringify(r.auth)}`),
+  ...report.filter((r) => r.auth?.fits && Math.abs(r.auth.offsetY) > 40).map((r) => `sign-in panel not vertically centered: ${r.scenario} ${JSON.stringify(r.auth)}`),
+  ...report.filter((r) => r.auth && !r.reduced && r.auth.animation !== 'auth-enter').map((r) => `sign-in entrance animation missing: ${r.scenario} (${r.auth.animation})`),
+  ...report.filter((r) => r.auth && r.reduced && r.auth.animation !== 'none').map((r) => `sign-in animation not disabled under reduced motion: ${r.scenario} (${r.auth.animation})`),
   ...consoleProblems.map((c) => `console: ${c}`),
 ]
 writeFileSync(`${OUT}/audit.json`, JSON.stringify({ report, nav, theme, consoleProblems, failures }, null, 2))

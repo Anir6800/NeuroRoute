@@ -70,3 +70,6 @@
 - Navigation is now a bottom pill dock everywhere; the Stitch sidebar is gone from the implementation (docs say so). Pages still show empty states only.
 - Risks: animations are judged from code and static shots only; the dock has 5 fixed slots (a sixth destination needs the width formula revisited); `scripts/ui-audit.mjs` assumes Chrome and the dev stack; the icon set is hand-drawn.
 - Process lesson: a check that cannot fail is worse than none. The audit's overflow check hid itself behind mobile emulation until a mutation exposed it.
+
+## 2026-10-22 (UI-FIX-02)
+- Sign-in is a centered auth panel; centering math depends on the shell paddings and the dock height tokens (if either changes, `.auth` min-height must follow; the audit will flag drift).

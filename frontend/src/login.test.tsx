@@ -58,3 +58,11 @@ describe('Login page', () => {
     vi.unstubAllGlobals()
   })
 })
+
+describe('Login layout', () => {
+  it('is a centered auth panel with exactly one h1', () => {
+    const { container } = render(<Login />)
+    expect(container.querySelector('.auth > .auth__panel')).not.toBeNull()
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+  })
+})
