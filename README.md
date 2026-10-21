@@ -24,7 +24,24 @@ Fallback: Mininet is optional and not installed; without it, only simulated resu
 
 ## Environment variables
 
-None are read yet. When added, list them in `.env.example` (committed, no real values); `.env` is git-ignored. All services bind to `127.0.0.1` by default.
+Read by `backend/app/core/config.py` (prefix `NEUROROUTE_`, optional `backend/.env`, git-ignored; template in `backend/.env.example`):
+
+| Variable | Default | Rule |
+|---|---|---|
+| `NEUROROUTE_HOST` | `127.0.0.1` | must be loopback; anything else is rejected |
+| `NEUROROUTE_PORT` | `8001` | 1024-65535 |
+
+## Run the backend
+
+The prompt asked for `backend/.venv` on 3.11; the root `.venv` (3.15) is used instead.
+
+```powershell
+.\.venv\Scripts\python -m pip install pydantic-settings httpx   # on top of the S01 installs
+cd backend
+..\.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
+..\.venv\Scripts\python -m pytest -q; ..\.venv\Scripts\python -m ruff check .
+```
+`GET http://127.0.0.1:8001/health` returns `{"status","app","version"}` only; no metrics. Backend deps are not installed in `.venv-rl`, so backend tests run under `.venv` only.
 
 ## Git workflow
 

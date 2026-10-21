@@ -12,3 +12,7 @@
 ## 2026-10-21 (NR-D1-S03)
 - Folder tree and package markers only; still no application logic. Layout enforced by tests/test_layout.py (22 cases).
 - Boundary rule (research must not import app) is documented but not yet machine-checked.
+
+## 2026-10-21 (NR-D1-S04)
+- First real code: settings (loopback-only host, port range) and /health. No route/service/repository layers exercised yet.
+- Deprecation warning from Starlette TestClient + httpx; revisit when pinning dependencies.

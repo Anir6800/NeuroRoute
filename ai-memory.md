@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD a1d1e6c (S02 commit) before S03 commit, tree clean as of S03 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD 82765d7 (S03 commit) until the S04 commit, tree clean as of S04 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- Pending tasks: NR-D1-S04; decide on Mininet in WSL.
+- Pending tasks: NR-D1-S05; decide on Mininet in WSL.
 
 ## Task Log
 
@@ -45,3 +45,14 @@ Never log secrets here.
 - Scope: create the folder tree from the prompt; `__init__.py` in Python package dirs, `.gitkeep` elsewhere; document every path in README; add tests/test_layout.py.
 - Planned paths: frontend/src, backend/app/{api,services,repositories,schemas,core}, backend/research/{simulation,environments,baselines,agents,training,evaluation}, backend/tests, tests, experiments/configs, scripts, design/stitch/screens, network_lab/mininet, README.md, docs/*, ai-memory.md
 - Baseline evidence: git status clean; `pytest -q` -> no tests ran.
+
+### NR-D1-S04 — Bootstrap Python backend
+- Status: DONE. Intended commit: `neuroroute: bootstrap-python-backend`.
+- Verified: from backend/, `.venv` pytest -q -> 5 passed, 1 warning (starlette says httpx TestClient deprecated -> httpx2); ruff check . -> All checks passed; live `uvicorn app.main:app --host 127.0.0.1 --port 8001` + curl /health -> HTTP 200 {"status":"ok","app":"NeuroRoute","version":"0.1.0"}; root `pytest -q tests` 22 passed. Server stopped afterwards (first kill attempt failed; killed PID by command line; port 8001 confirmed free).
+- Paths changed: backend/pyproject.toml, backend/app/main.py, backend/app/core/config.py, backend/tests/test_health.py, backend/.env.example, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md. Installed in .venv: pydantic-settings 2.16.1, httpx 0.28.1.
+- Decisions: root .venv (3.15) used, no backend/.venv/3.11 (user override); pytest `pythonpath=["."]` in backend/pyproject, so run pytest from backend/; requires-python >=3.13.
+- Limitations: backend not tested on 3.13/.venv-rl (deps not installed there); no --reload run; httpx deprecation warning; no timeouts yet (no outbound calls). Next: S05 frontend scaffold.
+- Started: 2026-10-21 | Model tier: Sonnet 5.5 | Branch: main (HEAD 82765d7)
+- Scope: backend/pyproject.toml, app/main.py (FastAPI /health), app/core/config.py (pydantic-settings, host default 127.0.0.1), backend/tests/test_health.py, .env.example, README. Reuse root `.venv` (3.15) instead of backend/.venv on 3.11 (user override). Install pydantic-settings + httpx (latest) into .venv.
+- Planned paths: backend/pyproject.toml, backend/app/main.py, backend/app/core/config.py, backend/tests/test_health.py, .env.example, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; root `pytest -q` 22 passed (S03); pydantic-settings and httpx not installed.

@@ -17,3 +17,9 @@
 - Tests: `.venv` (3.15) `pytest -q` -> 22 passed; `.venv-rl` (3.13) -> 22 passed; `ruff check .` -> All checks passed.
 - Open issues: `backend/` is a package root, so import style (`backend.app...` vs path config) is undecided until the first real code. No pyproject yet.
 - Risks: layout test only checks existence, not import boundaries.
+
+## NR-D1-S04 — Bootstrap Python backend (2026-10-21)
+- Created: `backend/pyproject.toml`, `backend/app/main.py`, `backend/app/core/config.py`, `backend/tests/test_health.py`, `backend/.env.example`. Edited: `README.md`.
+- Tests (from backend/, `.venv` py3.15): `pytest -q` -> 5 passed, 1 warning; `ruff check .` -> All checks passed. Live uvicorn on 127.0.0.1:8001 -> `/health` HTTP 200.
+- Open issues: httpx TestClient deprecation (starlette suggests httpx2); not run on 3.13; `--reload` untested.
+- Risks: pytest must be run from `backend/` (pythonpath config lives there).
