@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD abe6f60 (NR-D2-S03 commit) until the NR-D2-S04 commit, tree clean as of NR-D2-S04 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD 667a184 (NR-D2-S04 commit), tree clean as of NR-D2-S05/S06 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S04 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
+- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S06 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
 
 ## Task Log
 
@@ -149,3 +149,22 @@ Never log secrets here.
 - Scope: design/stitch/screens/topology-studio.md = local spec from that HTML: graph layout, inspector, edit states, invalid-link and disabled states, token refs, data-honesty mapping to the real Scenario schema (nodes/links with capacity/delay/buffer/weight, validation rules from S06). HTML NOT committed. Plus tests, HANDOFF link, logs.
 - Planned paths: design/stitch/screens/topology-studio.md, tests/test_topology_studio_spec.py, design/stitch/HANDOFF.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: git status clean; root 60 passed, backend 50, frontend 12 (NR-D2-S03).
+
+### NR-D2-S05 — Design Training Lab in Stitch
+- Status: PARTIAL (spec DONE; exact prompt not supplied, no new Stitch screen; running + idle designed in Stitch, preflight-failed only; mid-run failed / aborted / completed / disabled-control states NOT in Stitch and written as [PROPOSED]). Intended commit: `neuroroute: design-training-lab-in-stitch`.
+- Verified: root `pytest -q tests` 72 passed on .venv (3.15) and .venv-rl (3.13); backend 50 passed; ruff clean; frontend typecheck 0 / 12 passed / build ok / lint 0. Stitch facts from HTML (sha256 prefix 5c856c53c226): 4 states (In-Flight, Pre-Run Config Ready, Validation Error, Cold Start/Empty) via switchState(); config col 7/12 + run col 5/12; no disabled attr/cursor-not-allowed; Pause/Abort always visible; 0 aria/role; 77/187 text uses are 10-11px.
+- Paths changed: design/stitch/screens/training-lab.md, tests/test_training_lab_spec.py, design/stitch/HANDOFF.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Decisions: describe the EXISTING screen; control-availability matrix + failed-run state proposed using Experiments' failure vocabulary (Diverged/OOM/Timeout/Crashed...); training = subprocess in .venv-rl (API 3.15 cannot import torch); only MaskablePPO real; Pause -> "Stop & save"; Dry-Run Preflight feasible with real checks.
+- Limitations / needs user: original prompt not provided; no screenshot; proposals unapproved; text_subtle token not added; nothing buildable until env/trainer/job API exist. Next: S06 (same session).
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (HEAD 667a184)
+- Finding: exact Training Lab prompt NOT supplied; existing Stitch screen "NeuroRoute AI - Training Lab" (projects/11953126075048924226/screens/5ec94870acca4d5b88ce996827dd5f04, 2560x3594). No new screen generated (write op). Spec derived read-only from its exported HTML (not committed).
+- Scope: design/stitch/screens/training-lab.md (controls, running/idle/failed states, token refs, [PROPOSED] for undesigned states, data-honesty vs reality: no trainer exists, torch only in .venv-rl py3.13, MaskablePPO), tests/test_training_lab_spec.py, HANDOFF link, logs.
+- Planned paths: design/stitch/screens/training-lab.md, tests/test_training_lab_spec.py, design/stitch/HANDOFF.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; root 66 passed, backend 50, frontend 12 (NR-D2-S04).
+
+### NR-D2-S06 — Design Experiments and Comparison in Stitch
+- Status: IN_PROGRESS (user sent S05 and S06 together; S06 follows S05 with its own commit)
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (after S05 commit)
+- Finding: exact prompts NOT supplied; existing screens "NeuroRoute AI - Experiments & Runs" (3f7210fb06d244cbb7aa15f7d248696f) and "NeuroRoute AI - Model Comparison" (22bbc11cef9747d5bd0e274daca47805). No new screens generated; "generate BOTH separately" not done (write ops). Continuity compared programmatically between the two (+ Overview) from exported HTML.
+- Scope: design/stitch/screens/experiments.md, design/stitch/screens/model-comparison.md (each with data-honesty table; model-comparison also a continuity section; readability checks of tables/plots with computed contrast), tests, HANDOFF links, logs.
+- Planned paths: design/stitch/screens/{experiments,model-comparison}.md, tests/test_experiments_comparison_spec.py, design/stitch/HANDOFF.md, docs/*, ai-memory.md

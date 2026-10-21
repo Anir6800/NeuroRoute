@@ -49,3 +49,7 @@
 ## 2026-10-22 (NR-D2-S04)
 - Spec only. The test file imports `backend.research.simulation.models`, coupling the spec to schema v1.0: a schema change must update the spec (intended).
 - Risk: three of the requested states exist only as proposals; if Stitch is later re-prompted, reconcile this file with the approved designs.
+
+## 2026-10-22 (NR-D2-S05)
+- Spec only. Training Lab cannot be built until environment, baselines, trainer CLI (`.venv-rl` subprocess) and a job API exist; the spec records that order.
+- Risk: the Stitch design implies capabilities (4 algorithms, GNN, GPU, pause) that conflict with the project's MaskablePPO/CPU plan.
