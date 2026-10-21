@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD f15e6c6 (NR-D2-S02 commit) until the NR-D2-S03 commit, tree clean as of NR-D2-S03 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD abe6f60 (NR-D2-S03 commit) until the NR-D2-S04 commit, tree clean as of NR-D2-S04 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S01 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
+- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S04 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
 
 ## Task Log
 
@@ -137,3 +137,15 @@ Never log secrets here.
 - Scope: design/stitch/screens/overview.md = local spec derived from that screen's exported HTML (read-only download, analysed in scratch, HTML NOT committed): layout, sections, states, token references, placeholder-data warnings, gaps vs tokens.json. Plus notes in docs, tests for the spec (exists, token refs resolve), logs.
 - Planned paths: design/stitch/screens/overview.md, tests/test_overview_spec.py, design/stitch/HANDOFF.md (status link), docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: git status clean; root 55 passed, backend 50, frontend 12 (NR-D2-S02).
+
+### NR-D2-S04 — Design Topology Studio in Stitch
+- Status: PARTIAL (spec DONE; exact prompt not supplied, no new Stitch screen; edit / invalid-link / disabled states are NOT in the Stitch design and are written as [PROPOSED]). Intended commit: `neuroroute: design-topology-studio-in-stitch`.
+- Verified: root `pytest -q tests` 66 passed on .venv (3.15) and .venv-rl (3.13); backend 50 passed; ruff clean; frontend typecheck 0 / 12 passed / build ok / lint 0. Stitch facts from the HTML: preview-state switcher variants selected/path/error/empty; inspector tabs Node/Candidate Paths/Scenario & Faults; canvas+inspector 8/4 cols at xl; 0 disabled attrs, 0 cursor-not-allowed, 0 aria/role; opacity-20/pointer-events-none are decorative; weight number input lacks min; JS alert() fabricates results; nodes are circles (r=26), 12 clickable; subtitle says 64 nodes/192 links but ~15 drawn.
+- Paths changed: design/stitch/screens/topology-studio.md, tests/test_topology_studio_spec.py, design/stitch/HANDOFF.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md.
+- Decisions: described the EXISTING screen; honest split [Stitch] vs [PROPOSED]; invalid-link states mapped 1:1 to real Scenario validators; layout positions are view state (don't change config_hash); disabled state spec uses real disabled/aria-disabled + reason text; test ties spec to Link schema so schema changes force a spec update.
+- Limitations / needs user: original prompt not provided; no screenshot; proposals unapproved (consider re-prompting Stitch for edit/invalid/disabled); tokens for canvas inset, layout sizes, disabled not added; no frontend implementation. Next: planner's next task.
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (HEAD abe6f60)
+- Finding: the "exact Topology Studio screen prompt" was NOT supplied (same as S03). Stitch project already has "NeuroRoute AI - Topology Studio" (projects/11953126075048924226/screens/bee8e9555edb4fbda649a48a5ef3c5d2, 2560x2490); its HTML was already downloaded read-only (65,765 chars). No new screen generated (write op).
+- Scope: design/stitch/screens/topology-studio.md = local spec from that HTML: graph layout, inspector, edit states, invalid-link and disabled states, token refs, data-honesty mapping to the real Scenario schema (nodes/links with capacity/delay/buffer/weight, validation rules from S06). HTML NOT committed. Plus tests, HANDOFF link, logs.
+- Planned paths: design/stitch/screens/topology-studio.md, tests/test_topology_studio_spec.py, design/stitch/HANDOFF.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; root 60 passed, backend 50, frontend 12 (NR-D2-S03).

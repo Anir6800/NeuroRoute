@@ -45,3 +45,7 @@
 ## 2026-10-22 (NR-D2-S03)
 - Spec only (no app code). Biggest risk: building from the Stitch screen would display fabricated metrics and non-existent hardware; spec section 5 maps each element to a real source or marks it blocked.
 - Overview v1 can use only /health and /me today; scenarios, runs, models and metrics have no backend yet.
+
+## 2026-10-22 (NR-D2-S04)
+- Spec only. The test file imports `backend.research.simulation.models`, coupling the spec to schema v1.0: a schema change must update the spec (intended).
+- Risk: three of the requested states exist only as proposals; if Stitch is later re-prompted, reconcile this file with the approved designs.
