@@ -23,3 +23,9 @@
 - Tests (from backend/, `.venv` py3.15): `pytest -q` -> 5 passed, 1 warning; `ruff check .` -> All checks passed. Live uvicorn on 127.0.0.1:8001 -> `/health` HTTP 200.
 - Open issues: httpx TestClient deprecation (starlette suggests httpx2); not run on 3.13; `--reload` untested.
 - Risks: pytest must be run from `backend/` (pythonpath config lives there).
+
+## NR-D1-S05 — Bootstrap React application (2026-10-21)
+- Created: `frontend/` Vite + React + TS app (package.json, lockfile, tsconfigs, vite.config.ts, index.html, .env.example, src/ with config, api/health, BackendStatus, Layout, Home, NotFound, tokens.css, app.test.tsx), `docs/setup/run-local.md`. Edited: `README.md`. Removed own placeholder `frontend/src/.gitkeep`.
+- Tests: `npm run typecheck` clean; `npm test` 7 passed; `npm run build` ok; live proxy `/api/health` -> 200 with backend JSON.
+- Skipped on purpose: firebase and unused libs (see run-local.md).
+- Open issues: no visual/browser check; preview server has no proxy; latest-version deps unpinned beyond the lockfile.

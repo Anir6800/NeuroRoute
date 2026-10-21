@@ -43,6 +43,16 @@ cd backend
 ```
 `GET http://127.0.0.1:8001/health` returns `{"status","app","version"}` only; no metrics. Backend deps are not installed in `.venv-rl`, so backend tests run under `.venv` only.
 
+## Run the frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev        # http://127.0.0.1:5173, proxies /api to the backend on 8001
+npm run typecheck; npm test; npm run build
+```
+`VITE_API_BASE_URL` (default `/api`) is documented in `frontend/.env.example`. Details: [docs/setup/run-local.md](docs/setup/run-local.md).
+
 ## Git workflow
 
 - Branch: `main`. Local repo only; a remote is optional.
@@ -56,7 +66,7 @@ Python dirs are packages (`__init__.py`); other empty dirs hold a `.gitkeep`. De
 
 | Path | Purpose |
 |---|---|
-| `frontend/src/` | React + TS + Vite UI. Design tokens and small reusable components only; no pasted Stitch screens. |
+| `frontend/` | React + TS + Vite app (`src/` has `api/`, `components/`, `pages/`, `styles/tokens.css`). UI. Design tokens and small reusable components only; no pasted Stitch screens. |
 | `backend/app/api/` | HTTP routes (FastAPI, `127.0.0.1`): parse/validate, call services. |
 | `backend/app/services/` | Business logic; calls repositories and research code. |
 | `backend/app/repositories/` | All DB access. |

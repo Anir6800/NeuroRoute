@@ -16,3 +16,7 @@
 ## 2026-10-21 (NR-D1-S04)
 - First real code: settings (loopback-only host, port range) and /health. No route/service/repository layers exercised yet.
 - Deprecation warning from Starlette TestClient + httpx; revisit when pinning dependencies.
+
+## 2026-10-21 (NR-D1-S05)
+- Frontend shell with typed, timeout-guarded health call and honest error state; tokens in styles/tokens.css. No dummy metrics.
+- Risk: Stitch design not yet imported; only a handful of tokens defined by hand. TypeScript 7 / Vite 8 are very new, watch for tooling breakage.
