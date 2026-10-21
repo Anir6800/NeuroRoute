@@ -42,7 +42,7 @@ describe('App shell', () => {
       </MemoryRouter>,
     )
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'NeuroRoute' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Overview' })).toBeTruthy()
     vi.unstubAllGlobals()
   })
   it('renders not-found for unknown routes', () => {
@@ -52,7 +52,7 @@ describe('App shell', () => {
         <App />
       </MemoryRouter>,
     )
-    expect(screen.getByText('Page not found')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeTruthy()
     vi.unstubAllGlobals()
   })
 })

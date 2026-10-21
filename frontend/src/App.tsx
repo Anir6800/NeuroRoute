@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
-import { Layout } from './components/Layout'
+import { AppShell } from './components/layout/AppShell'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { NotFound } from './pages/NotFound'
@@ -7,7 +7,7 @@ import { NotFound } from './pages/NotFound'
 export default function App() {
   return (
     <Routes>
-      <Route element={<Layout />}>
+      <Route element={<AppShell />}>
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="*" element={<NotFound />} />

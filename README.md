@@ -101,6 +101,15 @@ Then run the backend and frontend, open http://127.0.0.1:5173/login and sign in.
 
 Tests: `cd backend; ..\.venv\Scripts\python -m pytest -q`. The scenario tests also run under `.venv-rl` (`pytest -q tests/test_scenario.py`); `test_health.py` needs fastapi, which is only in `.venv`.
 
+## Frontend structure
+
+- `frontend/src/components/layout/`: `AppShell` (sidebar, top bar, skip link, main landmark; every route renders inside it), `Sidebar`, `TopBar` (breadcrumb from the route, live backend status pill, theme toggle, sign-in link), `ThemeToggle`, `BackendPill`.
+- `frontend/src/components/ui/`: accessible primitives: `Button` (`disabledReason` keeps it focusable, ignores clicks, shows the reason as text), `Card` (glass surface), `StatusPill` (glyph + text, never color alone), `EmptyState` / `ErrorState` / `LoadingState`, `ScreenState` (loading / empty / error / ready in one place), `PageHeader`, `Icon` (inline SVG; no icon font).
+- `frontend/src/styles/tokens.css` (generated from `design/tokens.json`) and `global.css` (shell and primitives; token variables only, no raw colors; tested).
+- `frontend/src/app/navigation.ts`: single source for sidebar items, breadcrumbs and document titles. `frontend/src/lib/theme.ts`: theme hook.
+- Theme: dark by default; follows the OS until you press the toggle; the choice is saved in `localStorage` (`neuroroute.theme`) and applied before first paint. Narrow windows (< 768 px) turn the sidebar into a drawer (an adaptation: Stitch drew desktop only).
+- No hosted assets: no CDN, fonts or icon fonts (fallback font stack). The Firebase SDK bundle contains Google API host names as library constants; `connectAuthEmulator` points auth at `127.0.0.1:9099` (checked by test; not verified with a network capture).
+
 ## Git workflow
 
 - Branch: `main`. Local repo only; a remote is optional.

@@ -111,6 +111,9 @@
   --motion-ease: ease-out;
   --motion-press-scale: 0.985;
   --focus-ring: 0 0 0 2px rgba(105, 116, 217, 0.2);
+  --layout-sidebar-width: 248px;
+  --layout-topbar-height: 64px;
+  --layout-content-max: 1680px;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {

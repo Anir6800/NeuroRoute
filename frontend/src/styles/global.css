@@ -1,0 +1,359 @@
+/* Shell layout and UI primitives. Every value comes from tokens.css; no hard-coded colors. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-md);
+  top: -100px;
+  z-index: 100;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  color: var(--color-accent-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+.skip-link:focus {
+  top: var(--space-md);
+}
+
+/* ---- shell ---- */
+.shell__body {
+  margin-left: var(--layout-sidebar-width);
+  min-height: 100vh;
+  background: var(--color-surface);
+}
+.shell__main {
+  outline: none;
+}
+.shell__content {
+  max-width: var(--layout-content-max);
+  margin: 0 auto;
+  padding: var(--space-xl);
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--layout-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+}
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.sidebar__brand strong {
+  display: block;
+  font-size: var(--type-headline-sm-size);
+  line-height: var(--type-headline-sm-line);
+}
+.sidebar__sub {
+  display: block;
+  color: var(--color-muted);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+.sidebar__logo {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+}
+.sidebar ul {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-control);
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+.sidebar__link:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+.sidebar__link[aria-current='page'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+.sidebar__foot {
+  margin: auto 0 0;
+  color: var(--color-muted);
+  font-size: var(--type-body-sm-size);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  height: var(--layout-topbar-height);
+  padding: 0 var(--space-xl);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-low);
+}
+.topbar__left,
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.topbar__menu {
+  display: none;
+}
+.topbar__signin {
+  color: var(--color-accent-text);
+}
+.crumbs {
+  display: flex;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-muted);
+}
+.crumbs li + li::before {
+  content: '/';
+  margin-right: var(--space-sm);
+}
+.crumbs [aria-current='page'] {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* Below the tablet breakpoint (768px, see tokens.json layout.breakpoint) the sidebar becomes a drawer.
+   Not drawn in Stitch; adapted here so the shell is usable on a narrow window. */
+@media (max-width: 767px) {
+  .shell__body {
+    margin-left: 0;
+  }
+  .shell__content {
+    padding: var(--space-lg);
+  }
+  .topbar {
+    padding: 0 var(--space-lg);
+  }
+  .topbar__menu {
+    display: inline-flex;
+  }
+  .sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform var(--motion-live) var(--motion-ease),
+      visibility var(--motion-live);
+  }
+  .sidebar.is-open {
+    transform: none;
+    visibility: visible;
+    box-shadow: var(--shadow-high);
+  }
+  .shell__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: var(--color-bg);
+    opacity: 0.6;
+  }
+}
+
+/* ---- primitives ---- */
+.btn-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 36px;
+  font-weight: 600;
+}
+.btn--icon {
+  justify-content: center;
+  padding: var(--space-sm);
+}
+/* Filled brand buttons would put light text on the brand color (4.12:1, below AA for small text),
+   so primary is tinted with accent text instead. */
+.btn--primary {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-muted);
+}
+.btn--danger {
+  background: transparent;
+  border-color: var(--status-critical);
+  color: var(--color-error);
+}
+.btn:hover:not([aria-disabled='true']):not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+.btn[aria-disabled='true'],
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn[aria-disabled='true']:active,
+.btn:disabled:active {
+  transform: none;
+}
+.btn-reason {
+  max-width: 32ch;
+  color: var(--color-muted);
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 2px var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--type-code-md-size);
+  line-height: var(--type-code-md-line);
+}
+.pill--healthy {
+  color: var(--color-ok);
+}
+.pill--warning {
+  color: var(--color-warn);
+}
+.pill--critical {
+  color: var(--color-error);
+}
+.pill--info {
+  color: var(--color-info);
+}
+
+.card__title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--type-headline-sm-size);
+  line-height: var(--type-headline-sm-line);
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+.page-header h1 {
+  margin: 0;
+  font-size: var(--type-headline-lg-size);
+  line-height: var(--type-headline-lg-line);
+  letter-spacing: var(--type-headline-lg-tracking);
+}
+.page-header p {
+  margin: var(--space-xs) 0 0;
+  max-width: 70ch;
+  color: var(--color-muted);
+}
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-surface);
+}
+.state__title {
+  margin: 0;
+  font-size: var(--type-headline-md-size);
+  line-height: var(--type-headline-md-line);
+}
+.state__text {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--color-muted);
+}
+.state--error {
+  border-style: solid;
+  border-color: var(--status-critical);
+}
+.state--error .state__title {
+  color: var(--color-error);
+}
+.state--loading {
+  grid-auto-flow: column;
+  align-items: center;
+  border-style: solid;
+}
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

@@ -57,3 +57,7 @@
 ## 2026-10-22 (NR-D2-S06)
 - Specs only. Two tests assert "scipy/pyarrow not installed": installing either will fail the test on purpose so the specs get re-read.
 - Risk: the five Stitch screens disagree on shell, naming and sample numbers; building screens one by one from them would bake in the inconsistencies. The continuity rules in model-comparison.md section 6 (one shell component, one fixture set, one status vocabulary) should be adopted before UI work.
+
+## 2026-10-22 (NR-D2-S07)
+- First real UI code: shell + primitives, tested for behavior, tokens-only CSS, and no hosted assets. Pages are still the S05 ones (Overview=Home, Login, 404); five MVP routes arrive in S08.
+- Risks: unseen visually; light theme values are partly derived; Firebase SDK ~370 kB bundle (auth only, tree-shaking not audited); mobile drawer has no focus trap; icon set is hand-drawn and minimal.

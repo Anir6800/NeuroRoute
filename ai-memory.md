@@ -5,10 +5,10 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD 667a184 (NR-D2-S04 commit), tree clean as of NR-D2-S05/S06 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD 4fee034 (NR-D2-S06 commit), tree clean as of NR-D2-S07/S08 start (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
-- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next Day-2 task after NR-D2-S06 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
+- One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next task after NR-D2-S08 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
 
 ## Task Log
 
@@ -173,3 +173,19 @@ Never log secrets here.
 - Finding: exact prompts NOT supplied; existing screens "NeuroRoute AI - Experiments & Runs" (3f7210fb06d244cbb7aa15f7d248696f) and "NeuroRoute AI - Model Comparison" (22bbc11cef9747d5bd0e274daca47805). No new screens generated; "generate BOTH separately" not done (write ops). Continuity compared programmatically between the two (+ Overview) from exported HTML.
 - Scope: design/stitch/screens/experiments.md, design/stitch/screens/model-comparison.md (each with data-honesty table; model-comparison also a continuity section; readability checks of tables/plots with computed contrast), tests, HANDOFF links, logs.
 - Planned paths: design/stitch/screens/{experiments,model-comparison}.md, tests/test_experiments_comparison_spec.py, design/stitch/HANDOFF.md, docs/*, ai-memory.md
+
+### NR-D2-S07 — Implement shared React shell from Stitch
+- Status: DONE (visual check by user pending; not verified in a browser by me). Intended commit: `neuroroute: implement-shared-react-shell-from-stitch`.
+- Verified: frontend typecheck 0 / `npm test` 34 passed / build ok / lint 0; root `pytest -q tests` 86 passed on .venv (3.15) and .venv-rl (3.13); backend 50; ruff clean; mutation check (2 deliberate breaks caught). dist: html/css have no remote refs; js has only Firebase default API host constants (allowlisted in tests/test_no_cdn.py); connectAuthEmulator wired.
+- Paths changed: frontend/src/{components/layout/*,components/ui/*,styles/global.css,lib/theme.ts,app/navigation.ts,App.tsx,main.tsx,pages/{Home,NotFound}.tsx,app.test.tsx,shell.test.tsx,ui.test.tsx}, design/tokens.json, scripts/build_tokens.py, frontend/src/styles/tokens.css (generated), tests/test_no_cdn.py, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md. Removed my own components/Layout.tsx.
+- Decisions: variant A shell; nav/breadcrumb/title from navigation.ts; primary button accent-tinted (AA) instead of filled white-on-brand; Button disabledReason (aria-disabled, focusable, visible reason); StatusPill glyph+text; theme dark default + OS follow + saved choice; mobile drawer added.
+- INCIDENT/LESSON: `scripts/dev-neuro.sh stop` killed a dev stack the USER had running (script reported ports busy first). Before running start/stop scripts, check whether ports 9099/8001/5173 are already listening and whether the user's stack is up; never `stop` a stack I did not start; tell the user if I do. I will restart it at the end of S08.
+- Limitations: no browser visual check; screen-reader/keyboard walkthrough not done; mobile drawer has no focus trap. Next: S08.
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (HEAD 4fee034)
+- Scope: shell adapted (not pasted) from the Stitch specs + continuity rules (variant A: 64px top bar, 248px sidebar): frontend/src/components/layout/{AppShell,Sidebar,TopBar,ThemeToggle,BackendPill}.tsx, components/ui/{Button,Card,StatusPill,EmptyState,ErrorState,LoadingState,ScreenState,PageHeader,Icon}.tsx, styles/global.css, lib/theme.ts, app/navigation.ts; layout tokens (sidebar width, top bar height, content max) added to design/tokens.json + generator (as proposed in the specs); old components/Layout.tsx superseded and removed (my own S05 scaffold). No CDN, no icon font (inline SVG icons), no new npm deps.
+- Planned paths: frontend/src/{components/layout,components/ui,styles/global.css,lib/theme.ts,app/navigation.ts,App.tsx,main.tsx}, design/tokens.json, scripts/build_tokens.py, frontend/src/styles/tokens.css (generated), frontend tests, tests/test_no_cdn.py, README.md, docs/*, ai-memory.md
+- Baseline evidence: git status clean; root 80 passed, backend 50, frontend 12 (NR-D2-S06).
+
+### NR-D2-S08 — Implement screen skeletons and navigation
+- Status: PLANNED (follows S07 with its own commit)
+- Scope: frontend/src/pages/{Overview,Topology,Training,Experiments,Comparison}.tsx (loading/empty/error UI via ScreenState; NO mock data; honest empty states, disabled actions with reasons), frontend/src/app/router.tsx (route config with handles, data router), navigation smoke tests, breadcrumbs generated from route handles.

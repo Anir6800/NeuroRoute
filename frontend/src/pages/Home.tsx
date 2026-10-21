@@ -1,13 +1,14 @@
 import { BackendStatus } from '../components/BackendStatus'
+import { Card } from '../components/ui/Card'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export function Home() {
   return (
-    <section className="card">
-      <h1>NeuroRoute</h1>
-      <p style={{ color: 'var(--color-muted)' }}>
-        Local research console. No results are shown until real runs exist.
-      </p>
-      <BackendStatus />
-    </section>
+    <>
+      <PageHeader title="Overview" description="Local research console. No results are shown until real runs exist." />
+      <Card title="Backend">
+        <BackendStatus />
+      </Card>
+    </>
   )
 }
