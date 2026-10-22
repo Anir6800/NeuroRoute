@@ -3,7 +3,7 @@ name = "neuroroute-backend"
 version = "0.1.0"
 description = "NeuroRoute local API (localhost only)"
 requires-python = ">=3.13"
-dependencies = ["fastapi", "uvicorn", "pydantic-settings", "firebase-admin", "networkx", "numpy"]
+dependencies = ["fastapi", "uvicorn", "pydantic-settings", "firebase-admin", "networkx", "numpy", "gymnasium"]
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx", "ruff", "hypothesis"]

@@ -5,7 +5,7 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD ffed6f1 (NR-D3-S02 commit), tree clean as of NR-D3-S03 start (earlier: d928d4b S01). REMOTE: origin = https://github.com/Anir6800/NeuroRoute.git was added by the user outside my sessions; origin/main is at 667a184 and local main is 8 commits ahead. I do NOT push unless the user asks (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD 2c61240 (NR-D3-S03 commit) + NR-D3-S04 commit on top; tree clean as of NR-D3-S04 start (earlier: ffed6f1 S02, d928d4b S01). REMOTE: origin = https://github.com/Anir6800/NeuroRoute.git was added by the user outside my sessions; origin/main is at 667a184 and local main is 8 commits ahead. I do NOT push unless the user asks (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
 - One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next task after NR-D2-S08 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
@@ -256,3 +256,23 @@ Never log secrets here.
 - candidates.py lives in simulation/ so it must NOT import baselines (baselines import simulation); baselines' own Yen use could later be refactored onto it.
 - Planned paths: backend/research/simulation/candidates.py, backend/tests/test_candidates.py, docs/candidates.md, README.md, backend/pyproject.toml (+hypothesis dev), docs/task_log.md, docs/codebase_audit.md, ai-memory.md
 - Baseline evidence: git status clean; backend 285 passed (3.15), root 87, frontend 63 (NR-D3-S02). Dev stack not running at start.
+
+### NR-D3-S04 - Define Gymnasium observation/action/reward contract
+- Status: DONE (committed after verification; not pushed)
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (HEAD 2c61240). origin remote exists (user's GitHub), local is 10 ahead; I do not push.
+- Scope: backend/research/environments/{routing_env.py, config.py}; experiments/configs/env_default.json (all reward weights live in the config, none hard-coded); docs/rl_contract.md (spaces, layout, reward, termination) and docs/research-protocol.md (experiment protocol: seeds, splits, metrics, labelling); backend/tests/test_routing_env.py.
+- Design decisions made up front:
+  * One env step = one simulator step. The agent controls ONE flow (agent_flow, default first by id; reset(options={"flow_id":...}) switches); other flows follow a background policy (dijkstra default, ecmp optional). Action = Discrete(K) index into the S03 candidate set.
+  * Observation = Box(0,1,(D,),float32): link utilisation (offered rho clipped to [0,2], /2), normalised queue delay, src one-hot, dst one-hot, previous action one-hot (K+1, last = none), per-candidate features (hop count, bottleneck residual capacity, summed delay, valid flag) x K. D depends only on (nodes, links, K). Link metrics are from the PREVIOUS step (no peeking at the future), same as the baselines.
+  * Reward = -w_delay*delay_norm - w_loss*loss - w_churn*route_change - w_invalid*invalid (all four in config, defaults 1.0 / 1.0 / 0.05 / 1.0 are untuned placeholders). delay_norm = delay / derived upper bound (hops_max * max link (prop + K/mu)); undeliverable => 1. route_change counts only when the previous path is still valid and differs (a forced move after a failure is not penalised).
+  * Termination: no-route at a decision point => terminated=True, extra penalty = (w_delay+w_loss) * (-remaining_steps) (S03 rule scaled to the configured worst step); end of scenario => truncated=True; never both. Stepping after done raises.
+  * Invalid (masked) action: substitute slot 0 + w_invalid penalty + info["invalid_action"]=True (needed so gymnasium check_env, which samples unmasked actions, passes); out-of-range or non-integer raises.
+  * Seeding: reset(seed) seeds np_random and draws the traffic seed from it; an env never seeded uses scenario.seed (deterministic by default).
+  * action_masks() (sb3-contrib convention) and info["action_mask"] (safe mask at no-route).
+- Tests planned: gymnasium check_env; fixed shape + range; 10,000 random masked actions with zero invalid and every chosen path independently validated; same seed => identical trajectories; reward formula against evaluate_step; termination/truncation; observation layout vs docs; SB3 check_env and a short MaskablePPO learn (skipped on 3.15).
+- Planned paths: backend/research/environments/{config,routing_env}.py, experiments/configs/env_default.json, backend/tests/test_routing_env.py, docs/{rl_contract,research-protocol}.md, backend/pyproject.toml (+gymnasium), README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: git status clean; backend 337 passed (3.15), root 87, frontend 63 (NR-D3-S03). Dev stack not running at start.
+- Result (2026-10-22): files created as planned. Commands and actual results: `.venv python -m pytest -q` in backend: 398 passed, 1 skipped (3.15); `.venv-rl` test_routing_env.py: 62 passed (3.13, incl. SB3 check_env + MaskablePPO.learn), the rest of the rl suite 377 passed with test_health/test_auth ignored (no fastapi/jwt in .venv-rl, expected); root tests: 87 passed; `ruff check .`: all passed; `git diff --check`: clean (CRLF warnings only). Frontend untouched (not re-run). 10,000 random masked actions: 0 invalid, every path re-validated independently.
+- Mutation checks: churn sign, hard-coded churn weight, loss weight, unpenalised invalid, utilisation cap, truncated->terminated: all caught; source restored.
+- Fixes found in my own work: one test expectation (a cut at the last step terminates from the step before, with 1 step of penalty); ruff findings.
+- Risks: placeholder reward weights; single controlled flow; stale-mask substitution semantics.

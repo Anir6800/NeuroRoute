@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "k": 4,
+  "step_s": 1.0,
+  "agent_flow": null,
+  "background_policy": "dijkstra",
+  "reward": {
+    "w_delay": 1.0,
+    "w_loss": 1.0,
+    "w_churn": 0.05,
+    "w_invalid": 1.0
+  }
+}

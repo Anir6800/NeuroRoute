@@ -86,3 +86,9 @@
 ## 2026-10-22 (NR-D3-S03)
 - Two Yen-based path enumerations now exist (baselines Topology.simple_paths and candidates.py); a test keeps them consistent on integer-weight graphs, but they should be merged when the environment lands.
 - Risks: candidate ordering is by static weight (the best path under load may fall outside the K cheapest on route-rich graphs); the no-route penalty convention is unproven until a reward function uses it; property-test runtime is about 10 s per interpreter.
+
+## 2026-10-22 (NR-D3-S04)
+- Reward weights (1.0 / 1.0 / 0.05 / 1.0) are untuned placeholders; no sensitivity study exists. Do not draw conclusions from rewards before one is run.
+- Only one flow is controlled; others use a fixed background policy. Observations use previous-step link metrics (no future leakage, tested).
+- A masked action is substituted rather than rejected (required for gymnasium check_env); masked policies never trigger it.
+- `.venv-rl` lacks fastapi/jwt, so run the API tests under `.venv` only.

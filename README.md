@@ -169,9 +169,14 @@ Python dirs are packages (`__init__.py`); other empty dirs hold a `.gitkeep`. De
 
 Run tests: `.venv\Scripts\python -m pytest -q`
 
+## Gymnasium environment (the RL contract)
+
+`backend/research/environments/routing_env.py` exposes the simulator as a `gymnasium.Env`: `Discrete(K)` over the K candidate paths (invalid slots masked, `action_masks()` for MaskablePPO), a fixed-size `Box(0,1)` observation (link utilisation, queue delay, src/dst one-hot, previous action, per-candidate features; 37 values on the base scenario), and `reward = -w_delay*delay - w_loss*loss - w_churn*route_change` with every weight in `experiments/configs/env_default.json` (placeholders, untuned). Disconnection terminates with a penalty; the scenario end truncates. Same seed gives identical trajectories. Spec: [docs/rl_contract.md](docs/rl_contract.md); experiment rules: [docs/research-protocol.md](docs/research-protocol.md). Tests: `pytest -q tests/test_routing_env.py` from `backend/` (the Stable-Baselines3 test runs only under `.venv-rl`).
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): intended layering
 - [docs/stitch-integration.md](docs/stitch-integration.md) and [design/stitch/HANDOFF.md](design/stitch/HANDOFF.md): optional Stitch MCP, key safety, manual export workflow
 - [docs/setup/local-machine.md](docs/setup/local-machine.md): machine audit
+- [docs/rl_contract.md](docs/rl_contract.md), [docs/research-protocol.md](docs/research-protocol.md): environment contract and experiment protocol
 - [docs/task_log.md](docs/task_log.md), [docs/codebase_audit.md](docs/codebase_audit.md)
