@@ -106,8 +106,8 @@ describe('navigation smoke tests', () => {
   })
 })
 
-// Topology Studio is a working editor now (tested in features/topology); the others are still placeholders.
-const SKELETONS = SCREENS.filter((s) => s.path !== '/topology')
+// Topology Studio and Training Lab are working screens; the others remain placeholders.
+const SKELETONS = SCREENS.filter((s) => !['/topology', '/training'].includes(s.path))
 
 describe('screen skeletons are honest', () => {
   it.each(SKELETONS)('$title: empty by default, one disabled action with a visible reason', async ({ path }) => {

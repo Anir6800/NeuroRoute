@@ -25,7 +25,7 @@ Two Python virtualenvs (PyTorch has no Python 3.15 build; see [docs/setup/local-
 ```powershell
 python -m venv .venv                 # 3.15 (default python)
 py -3.13 -m venv .venv-rl
-.\.venv\Scripts\python -m pip install networkx gymnasium numpy fastapi uvicorn pytest ruff
+.\.venv\Scripts\python -m pip install networkx gymnasium numpy fastapi uvicorn websockets pytest ruff
 .\.venv-rl\Scripts\python -m pip install torch stable-baselines3 sb3-contrib mlflow gymnasium networkx numpy pytest ruff
 ```
 
@@ -50,6 +50,10 @@ The local API also exposes bounded asynchronous training jobs: `POST /experiment
 CLI as a child process, accepts one job at a time, and keeps its generated data under `runs/jobs/`. The Training UI can
 subscribe to `/events/experiments/{job_id}` for heartbeats and completed-seed progress; it reconnects and polls the HTTP
 status endpoint while the socket is unavailable.
+
+The `/training` screen launches the bounded `normal` scenario directly: 3--5 seeds, 1--1,000 episodes, 1--16 candidate
+paths and 1--100,000 timesteps per seed. Controls lock while the job runs; every displayed value is visibly labelled as
+simulated training data from the local tracker.
 
 ## Environment variables
 

@@ -499,6 +499,56 @@
   color: var(--color-error);
 }
 
+.training-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  gap: var(--space-xl);
+}
+.training-form {
+  max-width: none;
+}
+.training-form__fixed,
+.training-source,
+.training-idle {
+  margin: 0;
+  color: var(--color-muted);
+}
+.field__error {
+  color: var(--color-error);
+}
+.training-progress {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-lg);
+}
+.training-progress dl {
+  display: grid;
+  gap: var(--space-sm);
+  width: 100%;
+  margin: 0;
+}
+.training-progress dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+.training-progress dt {
+  color: var(--color-muted);
+}
+.training-progress dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+}
+.training-progress progress {
+  width: 100%;
+}
+@media (max-width: 800px) {
+  .training-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ---- centered auth panel ---- */
 .page > .auth {
   animation: none; /* the panel has its own entrance; avoid animating twice */

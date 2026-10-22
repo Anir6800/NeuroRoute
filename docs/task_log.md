@@ -1,5 +1,9 @@
 # Task log
 
+## NR-D4-S06 — Implement Training Lab controls (2026-10-22)
+- Replaced the Training placeholder with a controlled form for seed count, episode cap, candidate paths and timestep budget; launches the authenticated local job API, locks during active work, and renders source-labelled simulated tracker progress through the existing event hook. Added the missing API-runtime `websockets` dependency found by the real browser check.
+- Focused tests validate every bound and prove the exact POST payload reaches a terminal, source-labelled UI. Real Chrome against the full local stack signed in, launched seeds=3/episodes=1/K=4/timesteps=8, showed `Updates: websocket`, then completed 3/3 in 14.2 s with no console errors; stack stopped and ports freed. Final checks: backend 597 passed, 6 skipped and Ruff clean; root 87 passed; frontend 127 passed, TypeScript, production build and oxlint clean.
+
 ## NR-D4-S05 — Add experiment progress WebSocket (2026-10-22)
 - Added authenticated `WS /events/experiments/{job_id}` progress and heartbeat events plus `useRunEvents`, which reconnects after a drop and polls the matching HTTP summary until the socket returns or the run finishes. Progress reports elapsed seconds and tracker-committed seed runs without importing ML dependencies into the API.
 - Focused tests cover heartbeat/terminal delivery, disconnect polling, metric continuity, reconnect and socket-unavailable fallback. A real 8-timestep, three-seed child run emitted 19 heartbeats and reached `done` with 3/3 completed runs in 19.18 s. Final checks: backend 597 passed, 6 skipped in 41.04 s and Ruff clean; frontend 127 passed, TypeScript, production build and oxlint clean.

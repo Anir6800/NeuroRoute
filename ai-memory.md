@@ -370,3 +370,9 @@ Never log secrets here.
 - Status: DONE (2026-10-22; committed after verification). Added authenticated job progress WebSocket events, one-second heartbeats, tracker-derived completed-run summaries, and a React hook with reconnect plus HTTP polling fallback. The HTTP job response carries the same metric summary so transport changes do not lose progress.
 - Evidence: focused backend 4 passed and hook 2 passed. Real API/child-process smoke emitted 19 heartbeats and reached `done` with 3/3 completed runs in 19.18 s. Final backend suite: 597 passed, 6 skipped in 41.04 s; Ruff clean. Frontend: 127 passed, TypeScript, Vite build and oxlint clean.
 - Risks: progress is seed-granular because the API reads committed tracker rows; it does not expose per-gradient or per-episode updates inside a seed. Job/socket state remains local and in-memory, matching the S04 localhost process model.
+
+### NR-D4-S06 - Implement Training Lab controls
+- Status: DONE (2026-10-22; committed after verification). Replaced the placeholder with validated seed/episode/K/timestep controls, authenticated launch, active-state locking, and visibly source-labelled simulated tracker progress. Added `websockets` to the API runtime after real Chrome proved Uvicorn otherwise rejected upgrades and forced polling.
+- Real browser evidence: local stack 5/5 healthy; emulator sign-in; UI launch with seeds=3, episodes=1, K=4, timesteps=8; live card showed `Updates: websocket`; terminal `Completed`, 3 of 3, 14.2 s; no console errors. Browser and stack closed, ports free.
+- Final checks: backend 597 passed, 6 skipped in 39.64 s and Ruff clean; root 87 passed; frontend 127 passed, TypeScript, Vite build and oxlint clean.
+- Risks: the page only exposes the fixed `normal` training scenario and one CPU thread, matching the bounded MVP API. Active job state is browser-session only; refreshing the page does not rediscover a still-running in-memory API job.

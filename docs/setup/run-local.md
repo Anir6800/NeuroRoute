@@ -10,7 +10,7 @@ Python 3.13+ (3.15 used here), Node.js LTS + npm, Git for Windows (provides Git 
 
 ```bash
 python -m venv .venv
-.venv/Scripts/python -m pip install networkx gymnasium numpy fastapi uvicorn pydantic-settings httpx jsonschema firebase-admin pytest ruff hypothesis   # Linux/macOS: .venv/bin/python
+.venv/Scripts/python -m pip install networkx gymnasium numpy fastapi uvicorn websockets pydantic-settings httpx jsonschema firebase-admin pytest ruff hypothesis   # Linux/macOS: .venv/bin/python
 npm install --prefix frontend
 ```
 The RL environment (`.venv-rl`, Python 3.13 with torch) is only needed for training; see the README.

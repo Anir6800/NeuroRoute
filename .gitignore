@@ -46,6 +46,7 @@ design/stitch/screens/**/*.html
 
 # UI audit output (screenshots, audit.json)
 .ui-audit/
+.playwright-cli/
 
 # UI audit output (screenshots, audit.json)
 .ui-audit/

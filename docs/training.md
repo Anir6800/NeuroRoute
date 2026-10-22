@@ -57,3 +57,14 @@ the local tracker, so progress remains a simulated training summary rather than 
 `useRunEvents(jobId)` handles this protocol. If connection or authentication fails, or an established socket drops, it polls
 `GET /experiments/{job_id}` once per second while retrying the socket every two seconds. Polling returns the same elapsed and
 completed-run summary, and both transports stop at a terminal state. The Vite `/api` proxy has WebSocket forwarding enabled.
+
+## Training Lab controls
+
+The local `/training` page starts the fixed `normal` scenario with one CPU thread. It validates the same default server
+budgets before POSTing: 3--5 training seeds, 1--1,000 episodes per seed, 1--16 candidate paths, and 1--100,000 timesteps per
+seed. The authenticated `202` response supplies the job id; the form locks while status is queued/running and unlocks at a
+terminal state. The status card reports completed seeds, elapsed time, update transport and errors. Its visible source label
+is **simulated MaskablePPO training · local experiment tracker**; these values are not network measurements.
+
+Uvicorn needs the runtime `websockets` dependency from `backend/pyproject.toml`. Without it, upgrade requests are rejected and
+the UI intentionally continues through polling, but the normal local stack installs it and streams over WebSocket.
