@@ -52,6 +52,8 @@ Override these localhost-only budgets with `NEUROROUTE_MAX_TRAINING_*` or `NEURO
 available after the API process restarts. `GET /experiments/{job_id}/details` includes immutable scenario/environment hashes,
 the selected seeds, and per-seed episode, timestep and wall-clock metrics. The authenticated `/experiments` UI displays that
 history and exports one selected detail record as JSON; all values remain simulated local-training data.
+The detail response also carries deterministic no-LLM narration. Training manifests currently have no paired baseline outcome
+metrics, so the UI explicitly says that it cannot make a comparative claim rather than inventing one.
 
 ### Progress events
 

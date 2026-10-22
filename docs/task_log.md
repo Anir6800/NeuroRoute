@@ -1,5 +1,9 @@
 # Task log
 
+## NR-D4-S08 — Create no-LLM fallback research narration (2026-10-22)
+- Added a pure deterministic summary service and run-detail UI. It reports only paired finite recorded baseline deltas, never labels them as improvements, and always lists simulation and uncertainty limitations. Current training manifests have no paired outcome metrics, so the visible fallback explicitly makes no comparative claim.
+- Evidence: exact-delta and missing-data unit tests plus API/UI coverage. Real Chrome signed in against the local stack, opened a durable run, and rendered the simulated/no-baseline/no-interval limitations with no console errors. Final checks: backend 600 passed, 6 skipped and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, production build and oxlint clean.
+
 ## NR-D4-S07 — Implement experiments list and details (2026-10-22)
 - Added authenticated manifest-backed experiment history/detail endpoints and an Experiments UI with run status, seed/timestep/wall-clock summaries, immutable metadata, per-seed metrics, and local JSON export. Completed records are reconstructed from ignored `runs/jobs/<id>/models/training-manifest.json`, so they persist across API restarts; active jobs remain in-memory.
 - Evidence: focused API test creates a manifest, rebuilds the job service to model an API restart, then reads history and details. Real Chrome signed in against the local stack and rendered four pre-existing completed runs, opened their hashes/per-seed table, and downloaded `neuroroute-02d5cfb18c964e18ac43942d3c6f12c0.json` with no console errors. Final checks: backend 598 passed, 6 skipped and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, production build and oxlint clean.

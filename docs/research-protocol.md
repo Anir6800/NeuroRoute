@@ -42,3 +42,5 @@ signal; headline comparisons use the metrics, not the reward, because the reward
 
 - Never present a simulated figure as a measurement. Never include a number that was not produced by a recorded command.
 - State failed or null results as well.
+- The local no-LLM narration reports only finite candidate/baseline metric pairs as their raw delta. It never calls a delta an
+  improvement, and it always states simulation status plus missing sample-count/confidence-interval limitations.

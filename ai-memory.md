@@ -382,3 +382,9 @@ Never log secrets here.
 - Result: completed jobs are reconstructed from their immutable ignored training manifests after an API restart; the UI shows scenario/status, seed completion, step and wall-clock summaries, config hashes, seeds and per-seed metrics.
 - Evidence: restart regression test rebuilds the job service and reads history/details; real Chrome signed in, rendered four previously completed records, opened metadata/per-seed metrics and downloaded the selected JSON with no console errors. Final backend suite: 598 passed, 6 skipped in 51.39 s and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, Vite build and oxlint clean.
 - Risks: active/failed/cancelled jobs without a completed manifest are intentionally not durable; per-episode metric arrays remain in the local tracker rather than being sent to the browser.
+
+### NR-D4-S08 - Create no-LLM fallback research narration
+- Status: DONE (2026-10-22; committed after verification). Scope: deterministic comparison-summary service, experiment-detail UI, focused tests and documentation. No LLM, model-quality inference, new metric collection or baseline runner.
+- Result: paired finite outcome metrics are rendered as raw candidate/baseline values and deltas only. Missing comparisons, sample counts and confidence intervals show explicit limitations; current manifests therefore make no comparative claim.
+- Evidence: exact-delta/missing-data tests plus API/UI coverage. Real Chrome signed in, opened an existing durable run, and rendered the simulation, no-baseline and no-interval limitations with no console errors. Final backend suite: 600 passed, 6 skipped in 40.95 s and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, Vite build and oxlint clean.
+- Risks: training manifests do not yet record comparable evaluation outcomes or confidence intervals, so production narration correctly has no observation sentence until that data exists.

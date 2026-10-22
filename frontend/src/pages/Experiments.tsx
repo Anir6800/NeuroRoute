@@ -5,11 +5,13 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState, LoadingState } from '../components/ui/States'
 import { API_BASE_URL } from '../config'
 import { RunTable, type ExperimentRun } from '../features/experiments/RunTable'
+import { RunSummary, type ResearchSummary } from '../features/experiments/RunSummary'
 import { getIdToken } from '../lib/session'
 
 type Detail = ExperimentRun & {
   metadata: { scenario_config_hash?: string; env_config_hash?: string; seeds?: number[] }
   runs: Array<{ run_id: string; seed: number; episodes: number; timesteps: number; wall_clock_s: number }>
+  research_summary: ResearchSummary
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
@@ -75,6 +77,7 @@ export function Experiments() {
       {detail && <Card title="Run details" className="experiment-detail">
         <div className="experiment-detail__header"><p className="training-source"><strong>Source:</strong> simulated MaskablePPO training · local experiment tracker</p><Button onClick={() => exportRun(detail)}>Export JSON</Button></div>
         <dl className="experiment-detail__metadata"><div><dt>Job</dt><dd>{detail.job_id}</dd></div><div><dt>Scenario hash</dt><dd>{detail.metadata.scenario_config_hash ?? 'Unavailable'}</dd></div><div><dt>Environment hash</dt><dd>{detail.metadata.env_config_hash ?? 'Unavailable'}</dd></div><div><dt>Seeds</dt><dd>{detail.metadata.seeds?.join(', ') ?? 'Unavailable'}</dd></div></dl>
+        <RunSummary summary={detail.research_summary} />
         <div className="run-table-wrap"><table className="run-table"><thead><tr><th scope="col">Seed</th><th scope="col">Episodes</th><th scope="col">Steps</th><th scope="col">Wall time</th></tr></thead><tbody>{detail.runs.map((run) => <tr key={run.run_id}><th scope="row">{run.seed}</th><td>{run.episodes}</td><td>{run.timesteps.toLocaleString()}</td><td>{run.wall_clock_s.toFixed(1)} s</td></tr>)}</tbody></table></div>
       </Card>}
     </>

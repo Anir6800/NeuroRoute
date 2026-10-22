@@ -554,6 +554,9 @@
 .experiment-detail__metadata div { display: grid; gap: var(--space-xs); }
 .experiment-detail__metadata dt { color: var(--color-muted); font-size: var(--type-body-sm-size); }
 .experiment-detail__metadata dd { margin: 0; overflow-wrap: anywhere; font-family: var(--font-mono); }
+.run-summary { margin-block: var(--space-lg); }
+.run-summary h3, .run-summary h4 { margin-bottom: var(--space-sm); }
+.run-summary ul { display: grid; gap: var(--space-xs); margin: 0 0 var(--space-md); padding-left: var(--space-lg); }
 @media (max-width: 800px) {
   .training-grid {
     grid-template-columns: minmax(0, 1fr);

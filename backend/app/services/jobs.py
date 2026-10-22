@@ -5,11 +5,13 @@ import json
 import sqlite3
 import subprocess
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
 from app.core.config import Settings
+from app.services.research_summary import summarize_research
 from research.environments.config import EnvConfig
 from research.scenarios import load_suite
 
@@ -119,7 +121,7 @@ class ExperimentJobs:
                 continue
             manifest = self._manifest(self.settings.training_jobs_dir / job_id)
             if manifest is None:
-                return {**entry, "metadata": {}, "runs": []}
+                return {**entry, "metadata": {}, "runs": [], "research_summary": summarize_research({})}
             runs = manifest.get("runs")
             if not isinstance(runs, list):
                 runs = []
@@ -127,6 +129,7 @@ class ExperimentJobs:
                 **entry,
                 "metadata": {key: manifest.get(key) for key in ("scenario_config_hash", "env_config_hash", "seeds", "env_config")},
                 "runs": [run for run in runs if isinstance(run, dict)],
+                "research_summary": summarize_research(_mapping(manifest.get("metrics")), _mapping(manifest.get("baseline_metrics"))),
             }
         return None
 
@@ -163,7 +166,6 @@ class ExperimentJobs:
         except (OSError, json.JSONDecodeError):
             return None
         return value if isinstance(value, dict) and value.get("command") == "train" else None
-
     def _validate(self, scenario: str, seed_count: int, timesteps: int, max_episodes: int, path_count: int) -> None:
         if scenario not in load_suite().names("train"):
             raise JobLimitError("scenario must be a suite training scenario")
@@ -192,3 +194,7 @@ class ExperimentJobs:
             job.status = "done" if exit_code == 0 else "failed"
             if exit_code != 0:
                 job.error = f"training process exited with code {exit_code}"
+
+
+def _mapping(value: object) -> Mapping[str, object]:
+    return value if isinstance(value, dict) else {}

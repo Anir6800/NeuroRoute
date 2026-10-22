@@ -127,6 +127,8 @@ def test_history_and_details_survive_an_api_restart(client) -> None:
     assert details.status_code == 200
     assert details.json()["metadata"]["scenario_config_hash"] == "scenario-hash"
     assert details.json()["runs"][1]["seed"] == 4
+    assert details.json()["research_summary"]["observations"] == []
+    assert "no comparative claim" in details.json()["research_summary"]["limitations"][1]
 
 
 def test_websocket_streams_heartbeats_and_progress_until_done(client) -> None:
