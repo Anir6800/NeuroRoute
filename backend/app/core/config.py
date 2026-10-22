@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     training_python: Path = Path(__file__).resolve().parents[3] / ".venv-rl" / "Scripts" / "python.exe"
     training_jobs_dir: Path = Path(__file__).resolve().parents[3] / "runs" / "jobs"
     training_timeout_s: int = Field(default=900, ge=1, le=86_400)
+    training_event_interval_s: float = Field(default=1.0, ge=0.05, le=60)
     max_training_timesteps: int = Field(default=100_000, ge=1, le=1_000_000)
     max_training_episodes: int = Field(default=1_000, ge=1, le=1_000)
     max_training_seeds: int = Field(default=5, ge=3, le=100)

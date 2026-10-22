@@ -14,11 +14,14 @@ from app.services.jobs import ExperimentJobs
 PROJECT = "demo-neuroroute"
 
 
-def auth() -> dict[str, str]:
+def token() -> str:
     now = int(time.time())
-    token = jwt.encode({"iss": f"https://securetoken.google.com/{PROJECT}", "aud": PROJECT, "sub": "job-user",
-                        "iat": now, "exp": now + 3600, "role": "researcher"}, None, algorithm="none")
-    return {"Authorization": f"Bearer {token}"}
+    return jwt.encode({"iss": f"https://securetoken.google.com/{PROJECT}", "aud": PROJECT, "sub": "job-user",
+                       "iat": now, "exp": now + 3600, "role": "researcher"}, None, algorithm="none")
+
+
+def auth() -> dict[str, str]:
+    return {"Authorization": f"Bearer {token()}"}
 
 
 class Process:
@@ -49,7 +52,7 @@ class Popen:
 def client(tmp_path: Path):
     popen = Popen()
     settings = Settings(training_python=tmp_path / "python.exe", training_jobs_dir=tmp_path / "jobs", max_training_seeds=5,
-                        max_training_path_count=8)
+                        max_training_path_count=8, training_event_interval_s=0.05)
     jobs = ExperimentJobs(settings, popen=popen)
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[routes.get_jobs] = lambda: jobs
@@ -89,5 +92,25 @@ def test_timeout_terminates_the_child(client) -> None:
     jobs = app.dependency_overrides[routes.get_jobs]()
     jobs._jobs[job_id].created_at -= jobs.settings.training_timeout_s + 1
     timed_out = http.get(f"/experiments/{job_id}", headers=auth())
-    assert timed_out.json() == {"job_id": job_id, "status": "failed", "error": "training exceeded the server timeout"}
+    assert timed_out.json() | {"elapsed_s": 0} == {
+        "job_id": job_id, "status": "failed", "error": "training exceeded the server timeout",
+        "elapsed_s": 0, "completed_runs": 0, "total_runs": 3,
+    }
     assert popen.processes[0].terminated
+
+
+def test_websocket_streams_heartbeats_and_progress_until_done(client) -> None:
+    http, popen = client
+    created = http.post("/experiments/train", json={}, headers=auth())
+    job_id = created.json()["job_id"]
+    with http.websocket_connect(f"/events/experiments/{job_id}") as websocket:
+        websocket.send_json({"token": token()})
+        progress = websocket.receive_json()
+        heartbeat = websocket.receive_json()
+        assert progress | {"elapsed_s": 0} == {
+            "type": "progress", "job_id": job_id, "status": "running", "error": None,
+            "elapsed_s": 0, "completed_runs": 0, "total_runs": 3,
+        }
+        assert heartbeat["type"] == "heartbeat" and heartbeat["timestamp"] > 0
+        popen.processes[0].code = 0
+        assert websocket.receive_json()["status"] == "done"

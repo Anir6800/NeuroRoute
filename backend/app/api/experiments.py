@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.auth import AuthUser, current_user
 from app.core.config import Settings, get_settings
-from app.services.jobs import ExperimentJob, ExperimentJobs, JobLimitError
+from app.services.jobs import ExperimentJobs, JobLimitError
 
 router = APIRouter(prefix="/experiments", tags=["experiments"])
 
@@ -30,6 +30,9 @@ class JobOut(_Strict):
     job_id: str
     status: Literal["queued", "running", "cancelled", "failed", "done"]
     error: str | None = None
+    elapsed_s: float
+    completed_runs: int
+    total_runs: int
 
 
 @lru_cache
@@ -46,24 +49,27 @@ Jobs = Annotated[ExperimentJobs, Depends(get_jobs)]
 User = Annotated[AuthUser, Depends(current_user)]
 
 
-def _out(job: ExperimentJob) -> JobOut:
-    return JobOut(job_id=job.id, status=job.status, error=job.error)
+def _out(progress: dict[str, object]) -> JobOut:
+    return JobOut.model_validate({key: progress[key] for key in JobOut.model_fields})
 
 
 @router.post("/train", status_code=status.HTTP_202_ACCEPTED)
 def start_training(body: TrainingRequest, _: User, jobs: Jobs) -> JobOut:
     try:
-        return _out(jobs.start(**body.model_dump()))
+        job = jobs.start(**body.model_dump())
+        progress = jobs.progress(job.id)
+        assert progress is not None
+        return _out(progress)
     except JobLimitError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from None
 
 
 @router.get("/{job_id}")
 def get_training(job_id: str, _: User, jobs: Jobs) -> JobOut:
-    job = jobs.get(job_id)
-    if job is None:
+    progress = jobs.progress(job_id)
+    if progress is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such training job")
-    return _out(job)
+    return _out(progress)
 
 
 @router.post("/{job_id}/cancel")
@@ -71,4 +77,6 @@ def cancel_training(job_id: str, _: User, jobs: Jobs) -> JobOut:
     job = jobs.cancel(job_id)
     if job is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such training job")
-    return _out(job)
+    progress = jobs.progress(job.id)
+    assert progress is not None
+    return _out(progress)

@@ -1,5 +1,9 @@
 # Task log
 
+## NR-D4-S05 — Add experiment progress WebSocket (2026-10-22)
+- Added authenticated `WS /events/experiments/{job_id}` progress and heartbeat events plus `useRunEvents`, which reconnects after a drop and polls the matching HTTP summary until the socket returns or the run finishes. Progress reports elapsed seconds and tracker-committed seed runs without importing ML dependencies into the API.
+- Focused tests cover heartbeat/terminal delivery, disconnect polling, metric continuity, reconnect and socket-unavailable fallback. A real 8-timestep, three-seed child run emitted 19 heartbeats and reached `done` with 3/3 completed runs in 19.18 s. Final checks: backend 597 passed, 6 skipped in 41.04 s and Ruff clean; frontend 127 passed, TypeScript, production build and oxlint clean.
+
 ## NR-D4-S04 — Expose async experiment job API (2026-10-22)
 - Added `POST /experiments/train`, polling and cancellation endpoints backed by one bounded local OS subprocess. Requests are authenticated, suite/config paths are server-owned, and seeds, timesteps, episodes and candidate-path counts are capped before launch.
 - Tests: focused API lifecycle tests cover polling, overlap rejection, cancellation, timeout, and server-side budgets. A real 8-timestep, three-seed API smoke reached `done` in 13.9 s using the separate `.venv-rl` process. Final checks: backend `pytest -q` 596 passed, 6 skipped (54.23 s), Ruff clean; frontend 125 tests passed, typecheck, production build and lint clean. Child-process unit tests use a fake process, so they do not train models.

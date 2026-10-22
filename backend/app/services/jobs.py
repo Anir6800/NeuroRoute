@@ -1,6 +1,7 @@
 """Bounded local subprocess jobs for the CPU-only training harness."""
 from __future__ import annotations
 
+import sqlite3
 import subprocess
 import time
 from dataclasses import dataclass
@@ -27,6 +28,8 @@ class ExperimentJob:
     created_at: float
     process: subprocess.Popen[bytes] | None
     command: tuple[str, ...]
+    job_dir: Path
+    total_runs: int
     error: str | None = None
 
 
@@ -55,7 +58,7 @@ class ExperimentJobs:
             "--threads", "1", "--env-config", str(config_path), "--output-dir", str(job_dir / "models"),
             "--results-dir", str(job_dir / "results"), "--mlflow-dir", str(job_dir / "mlflow"),
         )
-        job = ExperimentJob(job_id, "queued", time.time(), None, command)
+        job = ExperimentJob(job_id, "queued", time.time(), None, command, job_dir, seed_count)
         self._jobs[job_id] = job
         try:
             job.process = self._popen(command, cwd=ROOT / "backend", stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -77,6 +80,24 @@ class ExperimentJobs:
                 job.process.terminate()
             job.status = "cancelled"
         return job
+
+    def progress(self, job_id: str) -> dict[str, object] | None:
+        job = self.get(job_id)
+        if job is None:
+            return None
+        completed_runs = 0
+        database = job.job_dir / "results" / "tracker.sqlite3"
+        if database.is_file():
+            try:
+                with sqlite3.connect(database, timeout=0.1) as connection:
+                    completed_runs = int(connection.execute("SELECT COUNT(*) FROM runs").fetchone()[0])
+            except sqlite3.Error:
+                pass
+        return {
+            "type": "progress", "job_id": job.id, "status": job.status, "error": job.error,
+            "elapsed_s": max(0.0, time.time() - job.created_at), "completed_runs": completed_runs,
+            "total_runs": job.total_runs,
+        }
 
     def _validate(self, scenario: str, seed_count: int, timesteps: int, max_episodes: int, path_count: int) -> None:
         if scenario not in load_suite().names("train"):

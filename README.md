@@ -47,7 +47,9 @@ metric arrays in local SQLite/Parquet (`experiments/results/`); local MLflow rem
 
 The local API also exposes bounded asynchronous training jobs: `POST /experiments/train` returns a job id, then
 `GET /experiments/{job_id}` polls it and `POST /experiments/{job_id}/cancel` stops it. It starts the Python 3.13 RL
-CLI as a child process, accepts one job at a time, and keeps its generated data under `runs/jobs/`.
+CLI as a child process, accepts one job at a time, and keeps its generated data under `runs/jobs/`. The Training UI can
+subscribe to `/events/experiments/{job_id}` for heartbeats and completed-seed progress; it reconnects and polls the HTTP
+status endpoint while the socket is unavailable.
 
 ## Environment variables
 

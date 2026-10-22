@@ -45,3 +45,15 @@ Only the fixed training suite and default environment config are accepted. Serve
 timesteps, 1--1,000 episodes, and 1--16 candidate paths; one local job can run for at most 15 minutes. Every request writes
 its derived immutable environment config and artifacts under `runs/jobs/<job_id>/`; source experiment configs are unchanged.
 Override these localhost-only budgets with `NEUROROUTE_MAX_TRAINING_*` or `NEUROROUTE_TRAINING_TIMEOUT_S` when needed.
+
+### Progress events
+
+Connect to `WS /events/experiments/{job_id}` and send `{"token": "<Firebase emulator ID token>"}` as the first message.
+The server then emits a `progress` event every second with `status`, `elapsed_s`, `completed_runs`, `total_runs`, and any
+error, plus a timestamped `heartbeat` while the job is active. It closes after `done`, `failed`, or `cancelled`; missing jobs
+close with code 4404 and failed authentication with 4401. `completed_runs` is the number of seed runs already committed to
+the local tracker, so progress remains a simulated training summary rather than a network measurement.
+
+`useRunEvents(jobId)` handles this protocol. If connection or authentication fails, or an established socket drops, it polls
+`GET /experiments/{job_id}` once per second while retrying the socket every two seconds. Polling returns the same elapsed and
+completed-run summary, and both transports stop at a terminal state. The Vite `/api` proxy has WebSocket forwarding enabled.
