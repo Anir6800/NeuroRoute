@@ -5,7 +5,6 @@ import { Comparison } from '../pages/Comparison'
 import { Experiments } from '../pages/Experiments'
 import { NotFound } from '../pages/NotFound'
 import { Overview } from '../pages/Overview'
-import { Topology } from '../pages/Topology'
 import { Training } from '../pages/Training'
 
 /** Paths here must stay in sync with NAV_ITEMS (a test enforces it). Every route renders inside AppShell. */
@@ -16,7 +15,8 @@ export const routes: RouteObject[] = [
     hydrateFallbackElement: <LoadingState label="Loading page" />,
     children: [
       { index: true, element: <Overview /> },
-      { path: 'topology', element: <Topology /> },
+      // Code-split: the editor pulls in React Flow, which the other screens do not need.
+      { path: 'topology', lazy: async () => ({ Component: (await import('../pages/Topology')).Topology }) },
       { path: 'training', element: <Training /> },
       { path: 'experiments', element: <Experiments /> },
       { path: 'comparison', element: <Comparison /> },

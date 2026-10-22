@@ -21,6 +21,9 @@ class _Strict(BaseModel):
 class NodeIn(_Strict):
     id: RawId
     kind: Literal["router", "host"] = "router"
+    # Editor layout only: not part of the graph, so it is excluded from `content_hash` and from research models.
+    x: float | None = Field(default=None, ge=-1e6, le=1e6, allow_inf_nan=False, strict=True)
+    y: float | None = Field(default=None, ge=-1e6, le=1e6, allow_inf_nan=False, strict=True)
 
 
 class LinkIn(_Strict):

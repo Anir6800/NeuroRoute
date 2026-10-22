@@ -1,8 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NAV_ITEMS } from './app/navigation'
 import { routes } from './app/router'
+import { stubReactFlowEnvironment } from './features/topology/testing'
 import { Comparison } from './pages/Comparison'
 import { Experiments } from './pages/Experiments'
 import { Overview } from './pages/Overview'
@@ -29,6 +30,8 @@ const SCREENS = [
 // Values that only exist in the Stitch sample data: none may appear in the app.
 const SAMPLE_MARKERS = ['3.42', '5.88', '8.14', '15.92', 'EXP-14', 'ActorCritic', 'Actor-Critic', 'M3 Max', 'DPDK', 'CUDA',
   'Elena Vance', 'Lead Researcher', '64-Spine', '4208-BURST']
+
+beforeAll(stubReactFlowEnvironment) // the Topology Studio draws with React Flow, which needs browser APIs jsdom lacks
 
 beforeEach(() => {
   document.title = ''
@@ -103,8 +106,11 @@ describe('navigation smoke tests', () => {
   })
 })
 
+// Topology Studio is a working editor now (tested in features/topology); the others are still placeholders.
+const SKELETONS = SCREENS.filter((s) => s.path !== '/topology')
+
 describe('screen skeletons are honest', () => {
-  it.each(SCREENS)('$title: empty by default, one disabled action with a visible reason', async ({ path }) => {
+  it.each(SKELETONS)('$title: empty by default, one disabled action with a visible reason', async ({ path }) => {
     renderApp(path)
     await screen.findByRole('heading', { level: 1 })
     const blocked = screen.getAllByRole('button').filter((b) => b.getAttribute('aria-disabled') === 'true')
@@ -123,7 +129,17 @@ describe('screen skeletons are honest', () => {
     for (const marker of SAMPLE_MARKERS) expect(text).not.toContain(marker)
   })
 
-  it.each(SCREENS)('$title: renders loading, error and empty states', ({ Page }) => {
+  it('Topology Studio starts empty and honest: no invented network, save blocked with a reason', async () => {
+    renderApp('/topology')
+    await screen.findByRole('toolbar', { name: 'Topology actions' })
+    expect(screen.getByText(/Empty canvas/)).toBeTruthy()
+    expect(document.querySelectorAll('.react-flow__node')).toHaveLength(0)
+    const save = screen.getByRole('button', { name: 'Save' })
+    expect(save.getAttribute('aria-disabled')).toBe('true')
+    expect(document.getElementById(save.getAttribute('aria-describedby') ?? '')?.textContent?.trim().length).toBeGreaterThan(0)
+  })
+
+  it.each(SKELETONS)('$title: renders loading, error and empty states', ({ Page }) => {
     const { rerender } = render(<Page status="loading" />)
     expect(screen.getAllByRole('status').some((s) => /\.\.\.$/.test(s.textContent ?? ''))).toBe(true)
     rerender(<Page status="error" />)

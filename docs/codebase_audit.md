@@ -106,3 +106,11 @@
 - The global 422 handler replaces FastAPI's default for every route (the shape `{loc, msg, type}` is kept; `input` and `ctx` are dropped).
 - SQLite file default is `backend/.data/` (git-ignored); no migrations tool, schema is `CREATE TABLE IF NOT EXISTS`.
 - Auth tokens are the forgeable emulator kind (existing, documented); ownership checks inherit that weakness.
+
+## 2026-10-22 (NR-D3-S07)
+- `npm audit` reports high-severity advisories in `@grpc/grpc-js` via firebase (pre-existing; `audit fix --force` would downgrade firebase to 9.x, so it was not run). `@xyflow/react` adds none of its own.
+- The session comes from Firebase's persisted emulator login; the top bar's "Sign in" link is not session-aware (pre-existing). Auth tokens are the forgeable emulator kind.
+- Dragging and handle connections are verified only by `scripts/topology-e2e.mjs` (run by hand, needs Chrome and the stack), not in CI; jsdom tests cover everything else.
+- `localStorage` remembers the last opened topology id per browser; a second browser tab editing the same topology will hit the 409 path.
+- Local validation duplicates the backend rules (kept in step by a drift test on reason codes only, not on semantics).
+- Large graphs are untested: the editor was exercised with up to 7 nodes; limits are 64 nodes and 512 links.

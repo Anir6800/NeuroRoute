@@ -22,7 +22,7 @@ Topologies belong to the user who created them; other users get 404 (not 403), s
  "links": [{"id": "a-r1", "source": "a", "target": "r1", "capacity_mbps": 100, "prop_delay_ms": 1, "buffer_pkts": 50, "weight": 1}]}
 ```
 
-`kind` is `router` (default) or `host`; `weight` defaults to 1. Links are directed (model a cable as two links). `PUT` adds an integer `version`.
+`kind` is `router` (default) or `host`; a node may carry `x` and `y` (editor layout, within +-1e6; not part of the graph, so excluded from `content_hash`); `weight` defaults to 1. Links are directed (model a cable as two links). `PUT` adds an integer `version`.
 Responses add `id`, `version`, `content_hash` (SHA-256 of the graph only, independent of order and name), `created_at`, `updated_at`.
 The fields match the research `Node`/`Link` models, so a saved topology plus flows is a valid `Scenario`. The research schema itself is
 unchanged, and the scenario hashes pinned in `experiments/configs/suite.json` still hold (a test checks).

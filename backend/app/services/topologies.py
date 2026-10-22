@@ -129,9 +129,9 @@ def validate_topology(topo: TopologyIn, limits: Limits) -> list[Reason]:
 
 
 def content_hash(nodes: list[NodeIn], links: list[LinkIn]) -> str:
-    """Order-insensitive hash of the graph only (not the name)."""
+    """Order-insensitive hash of the graph only (not the name or the node positions)."""
     body = {
-        "nodes": sorted((n.model_dump() for n in nodes), key=lambda d: d["id"]),
+        "nodes": sorted((n.model_dump(exclude={"x", "y"}) for n in nodes), key=lambda d: d["id"]),
         "links": sorted((lk.model_dump() for lk in links), key=lambda d: d["id"]),
     }
     text = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=True)

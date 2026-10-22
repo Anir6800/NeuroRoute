@@ -181,6 +181,10 @@ Run tests: `.venv\Scripts\python -m pytest -q`
 
 `/topologies` (create, get, list, update, validate) stores user-owned topologies in a local SQLite file. The route only delegates to a service (graph must be connected, no self-loops or duplicate links, positive capacity/delay, node/link limits from config), which uses a repository. Malformed JSON gives 422, an invalid graph 400 with machine-readable `reasons`, a stale `version` 409, no token 401. See [docs/topology_api.md](docs/topology_api.md). Tests: `pytest -q tests/test_topology_api.py` from `backend/`.
 
+## Topology Studio (React Flow)
+
+The `/topology` screen is a working editor: add routers and hosts, drag them, connect them (drag between handles or use the form), see validation problems as you edit, save to the local topology API, and reopen the same network, positions included, after a page reload. It needs the stack (`scripts/dev-neuro.sh`) and a signed-in emulator user to save; without them it says so and still lets you edit. See [docs/topology_editor.md](docs/topology_editor.md). Tests: `npm test` in `frontend/`; real-browser check: `node scripts/topology-e2e.mjs` with the stack running.
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): intended layering
@@ -189,4 +193,5 @@ Run tests: `.venv\Scripts\python -m pytest -q`
 - [docs/rl_contract.md](docs/rl_contract.md), [docs/research-protocol.md](docs/research-protocol.md): environment contract and experiment protocol
 - [docs/scenarios.md](docs/scenarios.md): scenario fixtures, seed splits, traffic shapes
 - [docs/topology_api.md](docs/topology_api.md): topology REST API
+- [docs/topology_editor.md](docs/topology_editor.md): the React Flow editor
 - [docs/task_log.md](docs/task_log.md), [docs/codebase_audit.md](docs/codebase_audit.md)

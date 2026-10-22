@@ -127,7 +127,7 @@ def test_every_shipped_fixture_topology_is_accepted_and_runs_in_the_simulator(cl
         body = {"name": name, "nodes": [n.model_dump() for n in sc.nodes], "links": [lk.model_dump() for lk in sc.links]}
         t = create(client, body)
         rebuilt = sc.model_dump(mode="json")  # a saved topology + the scenario's flows is a valid, simulatable scenario
-        rebuilt["nodes"], rebuilt["links"] = [n.model_dump() for n in t.nodes], [lk.model_dump() for lk in t.links]
+        rebuilt["nodes"], rebuilt["links"] = [n.model_dump(exclude={"x", "y"}) for n in t.nodes], [lk.model_dump() for lk in t.links]
         assert simulate(Scenario.model_validate(rebuilt)).digest() == simulate(sc).digest()
 
 
@@ -457,3 +457,28 @@ def test_the_service_rejects_bad_paging_itself(db_path: Path) -> None:
     for limit, offset in ((0, 0), (101, 0), (10, -1)):
         with pytest.raises(ValueError):
             service.list("u", limit, offset)
+
+
+def test_node_positions_are_stored_but_are_not_part_of_the_graph_identity(client: TestClient) -> None:
+    plain = create(client, diamond("plain"))
+    placed = diamond("placed")
+    for i, n in enumerate(placed["nodes"]):
+        n.update(x=10.5 * i, y=-3.0)
+    t = create(client, placed)
+    assert [(n.x, n.y) for n in t.nodes] == [(0.0, -3.0), (10.5, -3.0), (21.0, -3.0), (31.5, -3.0)]
+    assert client.get(f"/topologies/{t.id}", headers=auth()).json()["nodes"][1] == {"id": "r1", "kind": "router", "x": 10.5, "y": -3.0}
+    assert t.content_hash == plain.content_hash  # moving nodes does not change the graph
+    assert plain.nodes[0].x is None
+    moved = {**placed, "version": 1}
+    moved["nodes"][0]["x"] = 99.0
+    r = client.put(f"/topologies/{t.id}", json=moved, headers=auth())
+    assert r.status_code == 200 and r.json()["nodes"][0]["x"] == 99.0 and r.json()["content_hash"] == t.content_hash
+
+
+@pytest.mark.parametrize("bad", ["12", float("inf"), 1e7, -1e7, True])
+def test_bad_node_positions_are_422(client: TestClient, bad) -> None:
+    body = diamond()
+    body["nodes"][0]["x"] = bad
+    text = json.dumps(body).replace("Infinity", "1e999")
+    r = client.post("/topologies", content=text, headers={**auth(), "Content-Type": "application/json"})
+    assert r.status_code == 422
