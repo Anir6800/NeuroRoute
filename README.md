@@ -26,10 +26,22 @@ Two Python virtualenvs (PyTorch has no Python 3.15 build; see [docs/setup/local-
 python -m venv .venv                 # 3.15 (default python)
 py -3.13 -m venv .venv-rl
 .\.venv\Scripts\python -m pip install networkx gymnasium numpy fastapi uvicorn pytest ruff
-.\.venv-rl\Scripts\python -m pip install torch stable-baselines3 sb3-contrib gymnasium networkx numpy pytest ruff
+.\.venv-rl\Scripts\python -m pip install torch stable-baselines3 sb3-contrib mlflow gymnasium networkx numpy pytest ruff
 ```
 
 Fallback: Mininet is optional and not installed; without it, only simulated results exist and must be labelled as simulation, never as measurements.
+
+## Training
+
+Train the fixed-K masked routing policy on CPU with the Python 3.13 RL environment:
+
+```powershell
+cd backend
+..\.venv-rl\Scripts\python -m research.training.train --timesteps 10000 --max-episodes 10 --seeds 0 1 2 --threads 1
+```
+
+The harness requires at least three seeds per configuration, saves one checkpoint per seed, and records rewards, config hashes,
+git SHA, library versions and wall-clock time to local MLflow (`runs/mlflow/`). See [docs/training.md](docs/training.md).
 
 ## Environment variables
 
