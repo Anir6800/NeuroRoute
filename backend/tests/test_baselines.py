@@ -8,6 +8,7 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 import pytest
+from perf_util import best_rate, budget, skip_perf
 
 import research.baselines.bounds as bounds_module
 from research.baselines.base import (
@@ -523,3 +524,132 @@ def test_evaluate_step_validates_its_input() -> None:
             evaluate_step(sc, ok, offered)
     unrouted = evaluate_step(sc, {}, {"f": 10.0})
     assert unrouted.flow_loss[0] == 1.0 and unrouted.flow_throughput_mbps[0] == 0.0 and math.isnan(unrouted.flow_delay_ms[0])
+
+
+# ----------------------------------------------------------------------------- S08: zero traffic, no route, high load, reproducibility
+POLICY_FACTORIES = [StaticDijkstra, ECMP, CongestionAware, lambda s: RandomValid(s, seed=4), Oracle]
+POLICY_IDS = ["dijkstra", "ecmp", "congestion", "random", "oracle"]
+
+
+def late_flow_net(start: float, duration: float = 12.0):
+    sc = net(DIAMOND, [("f", "s", "t", 40.0)], duration=duration)
+    d = sc.model_dump(mode="json")
+    d["flows"][0]["start_s"] = start
+    return Scenario.model_validate(d)
+
+
+@pytest.mark.parametrize("make_policy", POLICY_FACTORIES, ids=POLICY_IDS)
+def test_zero_traffic_every_policy_idles_without_error(make_policy) -> None:
+    sc = late_flow_net(start=8.0)
+    run = run_policy(sc, make_policy(sc))
+    quiet = slice(0, 8)
+    assert all(d == ((),) for d in run.decisions[quiet])  # nothing to route: an empty decision, not a crash
+    assert (run.flow_offered_mbps[quiet] == 0).all() and (run.flow_throughput_mbps[quiet] == 0).all() and (run.flow_loss[quiet] == 0).all()
+    assert np.isnan(run.flow_delay_ms[quiet]).all() and (run.link_offered_rho[quiet] == 0).all()
+    assert all(len(paths_of(d[0])) >= 1 for d in run.decisions[8:])  # then it routes normally
+    assert run.switches[0] <= 3  # at most one change between consecutive ROUTED steps (4 of them); the quiet steps count for nothing
+    assert math.isfinite(run.summary()["mean_delay_ms"])
+
+
+@pytest.mark.parametrize("make_policy", POLICY_FACTORIES, ids=POLICY_IDS)
+def test_a_scenario_with_no_active_flow_at_all_gives_empty_but_well_formed_results(make_policy) -> None:
+    sc = late_flow_net(start=11.5, duration=12.0)  # starts inside the last step: steps 0..10 are silent
+    run = run_policy(sc, make_policy(sc), step_s=4.0)  # three steps of 4 s: the flow starts after the second one
+    assert [d for d in run.decisions[:2]] == [((),), ((),)]
+    summary = run_policy(late_flow_net(start=11.9), make_policy(late_flow_net(start=11.9)), step_s=12.0)
+    assert math.isnan(summary.summary()["delivered_fraction"]) and math.isnan(summary.summary()["loss"])  # 0 offered: undefined, not 0 / 0 crash
+    assert summary.summary()["switches"] == 0.0
+
+
+def partition_net():
+    """s -> t has three routes (cost 2, 2, 4); a separate x -> y link is unaffected by the outage of every s-side link."""
+    cut = [{"time_s": 3.0, "link_id": lid, "action": "down"} for lid in ("sa", "sb", "sc")]
+    heal = [{"time_s": 7.0, "link_id": lid, "action": "up"} for lid in ("sa", "sb", "sc")]
+    return net([*DIAMOND, link("xy", "x", "y")], [("f", "s", "t", 40.0), ("g", "x", "y", 20.0)], duration=10.0, failures=cut + heal)
+
+
+@pytest.mark.parametrize("make_policy", POLICY_FACTORIES, ids=POLICY_IDS)
+def test_no_route_in_the_closed_loop_costs_exactly_the_outage_and_nothing_else(make_policy) -> None:
+    sc = partition_net()
+    run = run_policy(sc, make_policy(sc))  # the runner validates every decision, so a route over a dead link would raise
+    f, g = run.flow_ids.index("f"), run.flow_ids.index("g")
+    outage = slice(3, 7)
+    assert all(d[f] == () for d in run.decisions[outage]) and all(d[f] != () for d in (*run.decisions[:3], *run.decisions[7:]))
+    assert (run.flow_loss[outage, f] == 1.0).all() and (run.flow_throughput_mbps[outage, f] == 0).all() and np.isnan(run.flow_delay_ms[outage, f]).all()
+    assert (run.flow_throughput_mbps[:, g] > 19.9).all() and np.isfinite(run.flow_delay_ms[:, g]).all()  # the other flow never notices
+    assert (run.flow_loss[:3, f] < 1e-6).all() and (run.flow_loss[7:, f] < 1e-6).all() and np.isfinite(run.flow_delay_ms[[0, 1, 2, 7, 8, 9], f]).all()
+
+
+def test_after_the_outage_heals_a_memoryless_policy_behaves_as_if_nothing_happened() -> None:
+    sc = partition_net()
+    clean = Scenario.model_validate({**sc.model_dump(mode="json"), "failures": []})
+    broken, intact = run_policy(sc, StaticDijkstra(sc)), run_policy(clean, StaticDijkstra(clean))
+    for step in (0, 1, 2, 7, 8, 9):
+        assert broken.decisions[step] == intact.decisions[step]
+        assert np.array_equal(broken.flow_delay_ms[step], intact.flow_delay_ms[step])
+
+
+@pytest.mark.parametrize("make_policy", POLICY_FACTORIES, ids=POLICY_IDS)
+def test_extreme_load_keeps_every_policy_finite_valid_and_within_the_capacity(make_policy) -> None:
+    sc = net(DIAMOND, [("f", "s", "t", 5000.0)], duration=8.0, kind="poisson")
+    run = run_policy(sc, make_policy(sc))
+    assert np.isfinite(run.flow_loss).all() and ((run.flow_loss >= 0) & (run.flow_loss <= 1)).all() and np.isfinite(run.flow_delay_ms).all()
+    assert (run.flow_throughput_mbps <= 300.0 + 1e-6).all()  # three routes of 100 Mbps is the most the graph can carry
+    assert (run.flow_loss > 0.9).all()  # 5000 Mbps into at most 300 Mbps of routes
+
+
+def test_at_overload_spreading_over_equal_cost_paths_carries_more_than_one_path() -> None:
+    sc = net(DIAMOND, [("f", "s", "t", 400.0)], duration=5.0)
+    single = run_policy(sc, StaticDijkstra(sc)).flow_throughput_mbps.mean()
+    split = run_policy(sc, ECMP(sc)).flow_throughput_mbps.mean()
+    # 100 Mbps per route, minus 1/101 lost at the second hop, which is offered exactly its capacity (rho = 1, buffer 100)
+    assert single == pytest.approx(100.0 * 100 / 101, rel=1e-6)
+    assert split == pytest.approx(2 * single, rel=1e-6)  # two equal-cost routes carry twice as much
+    assert run_policy(sc, Oracle(sc)).flow_throughput_mbps.mean() >= single - 1e-9
+
+
+@pytest.mark.parametrize("make_policy", POLICY_FACTORIES, ids=POLICY_IDS)
+def test_reusing_a_policy_instance_gives_the_same_run(make_policy) -> None:
+    sc = Scenario.model_validate({**BASE, "traffic": {"kind": "poisson", "packet_size_bytes": 1500}})
+    policy = make_policy(sc)
+    first, second = run_policy(sc, policy), run_policy(sc, policy)  # the runner resets internal state (hysteresis, RNG)
+    assert first.decisions == second.decisions and np.array_equal(first.flow_delay_ms, second.flow_delay_ms, equal_nan=True)
+
+
+def test_the_order_in_which_policies_are_run_does_not_change_any_result() -> None:
+    sc = Scenario.model_validate({**BASE, "traffic": {"kind": "poisson", "packet_size_bytes": 1500}})
+    forward = {n: run_policy(sc, f(sc)) for n, f in zip(POLICY_IDS, POLICY_FACTORIES, strict=True)}
+    backward = {n: run_policy(sc, f(sc)) for n, f in reversed(list(zip(POLICY_IDS, POLICY_FACTORIES, strict=True)))}
+    for name in POLICY_IDS:
+        assert forward[name].decisions == backward[name].decisions
+        for field in ("flow_loss", "flow_delay_ms", "link_delay_ms", "link_offered_rho"):  # NaN marks a failed link or an idle flow
+            assert np.array_equal(getattr(forward[name], field), getattr(backward[name], field), equal_nan=True), (name, field)
+
+
+# ----------------------------------------------------------------------------- S08: performance budget (docs/performance.md)
+# Worst of 3 repeated measurements on 2 interpreters on the development laptop (base scenario, 2 flows, 4 links; see docs/performance.md):
+# dijkstra 3,700, ecmp 3,700, congestion-aware 3,300, random 1,400, oracle 440 steps/s. Budgets are about a quarter to a third of that.
+MIN_POLICY_STEPS_PER_S = {"dijkstra": 800, "ecmp": 800, "congestion": 800, "random": 400, "oracle": 130}
+
+
+def _base_steps(steps: int) -> Scenario:
+    return Scenario.model_validate({**BASE, "duration_s": float(steps)})
+
+
+@skip_perf
+@pytest.mark.parametrize(("name", "make_policy"), list(zip(POLICY_IDS, POLICY_FACTORIES, strict=True)), ids=POLICY_IDS)
+def test_closed_loop_run_meets_the_steps_per_second_budget(name: str, make_policy) -> None:
+    steps = 300
+    sc = _base_steps(steps)
+    policy = make_policy(sc)
+    rate = best_rate(lambda: run_policy(sc, policy), steps, target=budget(MIN_POLICY_STEPS_PER_S[name]))
+    assert rate >= budget(MIN_POLICY_STEPS_PER_S[name]), f"{name}: {rate:.0f} steps/s is below {budget(MIN_POLICY_STEPS_PER_S[name]):.0f}"
+
+
+@skip_perf
+def test_the_oracle_is_the_only_policy_allowed_to_be_much_slower_than_the_simulator() -> None:
+    steps = 300
+    sc = _base_steps(steps)
+    sim = best_rate(lambda: simulate(sc), steps, repeats=9)
+    cheap = best_rate(lambda: run_policy(sc, StaticDijkstra(sc)), steps, repeats=9)
+    assert sim / cheap < 8  # routing decisions plus validation cost a small multiple of the bare simulator

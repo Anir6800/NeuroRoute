@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from gymnasium.utils.env_checker import check_env
+from perf_util import best_rate, budget, skip_perf
 
 from research.baselines.dijkstra import StaticDijkstra
 from research.environments.config import EnvConfig, RewardWeights
@@ -574,3 +575,25 @@ def test_stable_baselines3_accepts_the_env_and_a_masked_policy_never_acts_invali
         invalid += int(info["invalid_action"])
         done, steps = te or tr, steps + 1
     assert steps > 10 and invalid == 0 and sb3.__version__
+
+
+# ----------------------------------------------------------------------------- performance budget (docs/performance.md)
+MIN_ENV_STEPS_PER_S = 500  # worst of 3 repeated measurements on 2 interpreters: 1,660 steps/s (random masked actions, K=4, reset included)
+
+
+@skip_perf
+def test_env_step_meets_the_steps_per_second_budget() -> None:
+    sc = Scenario.model_validate({**BASE, "duration_s": 500.0})
+    env = RoutingEnv(sc)
+    rng = np.random.default_rng(0)
+
+    def rollout() -> None:
+        env.reset(seed=1)
+        done, n = False, 0
+        while not done and n < 500:
+            _, _, te, tr, _ = env.step(int(rng.choice(np.flatnonzero(env.action_masks()))))
+            done, n = te or tr, n + 1
+
+    # reset is included in the timed region (once per 500 steps), as in training
+    rate = best_rate(rollout, 500, target=budget(MIN_ENV_STEPS_PER_S))
+    assert rate >= budget(MIN_ENV_STEPS_PER_S), f"{rate:.0f} env steps/s is below the budget of {budget(MIN_ENV_STEPS_PER_S):.0f}"

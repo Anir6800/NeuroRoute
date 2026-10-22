@@ -6,12 +6,14 @@ import math
 import os
 import subprocess
 import sys
+from collections import deque
 from fractions import Fraction
 from itertools import pairwise
 from pathlib import Path
 
 import numpy as np
 import pytest
+from perf_util import best_rate, budget, skip_perf
 
 from research.simulation.engine import (
     exact_mm1k_sojourn,
@@ -402,3 +404,220 @@ def test_step_size_changes_resolution_not_the_model() -> None:
     coarse, fine = simulate(sc, step_s=2.0), simulate(sc, step_s=0.5)
     assert len(coarse.times_s) == 5 and len(fine.times_s) == 20
     assert coarse.flow_loss[0, 0] == pytest.approx(fine.flow_loss[0, 0], abs=1e-12)  # cbr: same rates, same queue
+
+
+# ================================================================== S08: independent analytic checks
+def des_mm1k(lam: float, mu: float, k: int, n_arrivals: int, seed: int) -> tuple[float, float]:
+    """Discrete-event simulation of an M/M/1/K FIFO queue, written independently of the engine: returns (blocking probability,
+    mean time in system of the accepted customers)."""
+    rng = np.random.default_rng(seed)
+    arrivals = np.cumsum(rng.exponential(1 / lam, n_arrivals)).tolist()
+    services = rng.exponential(1 / mu, n_arrivals).tolist()
+    in_system: deque[float] = deque()  # departure times of the customers currently present
+    last_departure = 0.0
+    blocked = accepted = 0
+    total = 0.0
+    for t, s in zip(arrivals, services, strict=True):
+        while in_system and in_system[0] <= t:
+            in_system.popleft()
+        if len(in_system) >= k:
+            blocked += 1
+            continue
+        last_departure = max(t, last_departure) + s
+        in_system.append(last_departure)
+        total += last_departure - t
+        accepted += 1
+    return blocked / n_arrivals, total / accepted
+
+
+@pytest.mark.parametrize(("lam", "mu", "k"), [(0.5, 1, 5), (0.9, 1, 10), (1.0, 1, 8), (1.5, 1, 6), (3.0, 1, 4), (0.2, 1, 3)])
+def test_closed_form_blocking_and_delay_match_an_independent_event_simulation(lam: float, mu: float, k: int) -> None:
+    runs = [des_mm1k(lam, mu, k, 200_000, seed) for seed in range(4)]  # fixed seeds: the test itself is deterministic
+    blocking, sojourn = (float(np.mean([r[i] for r in runs])) for i in (0, 1))
+    expected_blocking = float(mm1k_blocking(lam / mu, k))
+    assert blocking == pytest.approx(expected_blocking, abs=0.002 + 0.03 * expected_blocking)
+    assert sojourn == pytest.approx(exact_mm1k_sojourn(lam, mu, k), rel=0.015)
+
+
+def test_the_event_simulation_distinguishes_plausible_wrong_formulas() -> None:
+    """Guards the guard: its output is far from what two tempting wrong formulas predict."""
+    blocking, sojourn = des_mm1k(0.9, 1, 10, 200_000, 0)
+    rho, k = 0.9, 10
+    assert abs(blocking - rho**k * (1 - rho)) > 0.01  # the infinite-buffer M/M/1 tail instead of the finite-buffer formula
+    assert abs(sojourn - 1 / (1 - rho)) > 3  # the infinite-buffer M/M/1 delay
+
+
+@pytest.mark.parametrize(("rho", "k"), [(Fraction(1, 2), 5), (Fraction(9, 10), 10), (Fraction(1), 8), (Fraction(3, 2), 6), (Fraction(4), 3)])
+def test_littles_law_holds_on_the_exact_state_distribution(rho: Fraction, k: int) -> None:
+    """L = sum n p_n, lambda_eff = lambda (1 - p_K), W = L / lambda_eff, in exact rational arithmetic, against the engine's W."""
+    weights = [rho**n for n in range(k + 1)]
+    total = sum(weights)
+    p = [w / total for w in weights]
+    assert sum(p) == 1
+    lam, mu = 0.75, 0.75 / float(rho)
+    mean_in_system = sum(n * pn for n, pn in enumerate(p))
+    w = float(mean_in_system) / (lam * float(1 - p[k]))
+    assert exact_mm1k_sojourn(lam, mu, k) == pytest.approx(w, rel=1e-9)
+    assert float(mm1k_blocking(float(rho), k)) == pytest.approx(float(p[k]), rel=1e-9)  # PASTA: blocking = P(system full)
+
+
+def test_a_huge_buffer_recovers_the_infinite_buffer_mm1_queue() -> None:
+    for rho in (0.3, 0.7, 0.9):
+        assert float(mm1k_blocking(rho, 5000)) < 1e-12
+        assert exact_mm1k_sojourn(rho, 1.0, 5000) == pytest.approx(1 / (1 - rho), rel=1e-6)
+        assert float(mm1_sojourn_clamped(rho, 1.0, 5000)) == pytest.approx(1 / (1 - rho), rel=1e-9)
+
+
+def test_at_rho_one_the_exact_values_are_simple_fractions() -> None:
+    for k in (1, 2, 5, 30):
+        assert float(mm1k_blocking(1.0, k)) == pytest.approx(1 / (k + 1), rel=1e-12)  # uniform state distribution
+        assert exact_mm1k_sojourn(1.0, 1.0, k) == pytest.approx((k + 1) / 2, rel=1e-9)  # L = K / 2, lambda_eff = K / (K + 1)
+
+
+def test_a_single_cbr_link_delay_is_propagation_plus_the_clamped_sojourn() -> None:
+    cap, prop, buf, pkt = 50.0, 2.0, 40, 1500
+    sc = make([link("l", "a", "b", cap=cap, prop=prop, buf=buf)], [flow("f", "a", "b", 30.0)], kind="cbr", pkt=pkt)
+    r = simulate(sc)
+    mu = cap * 1e6 / (8 * pkt)
+    lam = 30.0 * 1e6 / (8 * pkt)
+    expected_ms = prop + float(mm1_sojourn_clamped(lam, mu, buf)) * 1e3
+    assert np.allclose(r.flow_delay_ms, expected_ms, rtol=1e-12)
+    assert np.allclose(r.flow_loss, float(mm1k_blocking(lam / mu, buf)), rtol=1e-9, atol=1e-15)
+
+
+def test_a_tandem_of_links_thins_the_load_by_the_loss_of_the_first_hop() -> None:
+    cap1, cap2, buf = 40.0, 100.0, 20
+    sc = make([link("l1", "a", "b", cap=cap1, buf=buf), link("l2", "b", "c", cap=cap2, buf=buf)], [flow("f", "a", "c", 60.0)])
+    r = simulate(sc)
+    pkt_bits = 8 * 1500
+    mu1, mu2, lam = cap1 * 1e6 / pkt_bits, cap2 * 1e6 / pkt_bits, 60e6 / pkt_bits
+    p1 = float(mm1k_blocking(lam / mu1, buf))
+    lam2 = lam * (1 - p1)  # what survives the first hop is what the second hop is offered
+    p2 = float(mm1k_blocking(lam2 / mu2, buf))
+    assert np.allclose(r.flow_loss, 1 - (1 - p1) * (1 - p2), rtol=1e-9)
+    assert np.allclose(r.link_offered_rho[:, 1], lam2 / mu2, rtol=1e-9)
+    assert r.converged.all()
+
+
+# ================================================================== S08: zero traffic
+def test_a_flow_that_has_not_started_contributes_nothing_and_reports_no_delay() -> None:
+    sc = make([link("l", "a", "b")], [flow("f", "a", "b", 30.0, start=15.0)], duration=20.0)
+    r = simulate(sc)
+    before = slice(0, 15)
+    assert not r.flow_active[before].any() and r.flow_active[15:].all()
+    assert (r.flow_offered_mbps[before] == 0).all() and (r.flow_throughput_mbps[before] == 0).all() and (r.flow_loss[before] == 0).all()
+    assert np.isnan(r.flow_delay_ms[before]).all() and np.isfinite(r.flow_delay_ms[15:]).all()  # no flow, no delay to report
+    assert (r.link_offered_rho[before] == 0).all() and (r.link_carried_mbps[before] == 0).all()
+    assert (r.link_loss[before] == 0).all() and np.isfinite(r.link_delay_ms).all()  # an idle link still has its idle delay
+
+
+def test_an_active_flow_that_happens_to_offer_zero_gets_the_idle_path_delay_and_no_loss() -> None:
+    sc = make([link("l1", "a", "b", prop=2.0), link("l2", "b", "c", prop=3.0)], [flow("f", "a", "c", 0.0001)], kind="poisson", duration=60.0, seed=3)
+    r = simulate(sc)
+    empty = r.flow_offered_mbps[:, 0] == 0
+    assert empty.sum() > 30  # the draw really did produce silent steps (0.0001 Mbps is about 0.008 packets per second)
+    idle_ms = sum(float(link_delay_breakdown(p, 100.0, 1500, 0.0, 100)["total_ms"]) for p in (2.0, 3.0))
+    assert np.allclose(r.flow_delay_ms[empty], idle_ms, rtol=1e-12)
+    assert (r.flow_loss[empty] == 0).all() and (r.flow_throughput_mbps[empty] == 0).all() and (r.link_offered_rho[empty] == 0).all()
+
+
+def test_zero_traffic_results_are_reproducible_and_finite_where_defined() -> None:
+    sc = make([link("l", "a", "b")], [flow("f", "a", "b", 5.0, start=19.0)], duration=20.0)
+    a, b = simulate(sc), simulate(sc)
+    assert a.digest() == b.digest()
+    for name, arr in a.arrays().items():
+        if name != "flow_delay_ms" and arr.dtype.kind == "f":
+            assert np.isfinite(arr).all(), name
+
+
+# ================================================================== S08: high load
+def extreme_chain(demand: float, buf: int = 30) -> Scenario:
+    links = [link("l1", "a", "b", cap=100.0, prop=1.0, buf=buf), link("l2", "b", "c", cap=10.0, prop=2.0, buf=buf),
+             link("l3", "c", "d", cap=50.0, prop=1.0, buf=buf)]
+    return make(links, [flow("f", "a", "d", demand)], kind="cbr", duration=10.0)
+
+
+@pytest.mark.parametrize("demand", [200.0, 5_000.0, 1e6, 1e9])
+def test_extreme_overload_stays_finite_bounded_and_conserved(demand: float) -> None:
+    r = simulate(extreme_chain(demand))
+    assert r.converged.all() and (r.iterations <= 200).all()
+    assert np.isfinite(r.flow_loss).all() and np.isfinite(r.flow_delay_ms).all() and np.isfinite(r.link_delay_ms).all()
+    assert ((r.flow_loss >= 0) & (r.flow_loss <= 1)).all()
+    assert (r.flow_throughput_mbps <= 10.0 + 1e-6).all()  # never more than the 10 Mbps bottleneck
+    # loss = 1 - carried / offered, checked on that side: offered * (1 - loss) cancels catastrophically when loss is within 1e-9 of 1
+    assert np.allclose(r.flow_loss, 1 - r.flow_throughput_mbps / r.flow_offered_mbps, rtol=0, atol=1e-12)
+    worst_ms = sum(p + 30 / (c * 1e6 / 12000) * 1e3 for p, c in ((1.0, 100.0), (2.0, 10.0), (1.0, 50.0)))
+    assert (r.flow_delay_ms <= worst_ms + 1e-6).all()  # propagation plus a full buffer on every hop is the ceiling
+
+
+def test_the_bottleneck_saturates_at_its_capacity_as_demand_grows() -> None:
+    carried = [float(simulate(extreme_chain(d)).flow_throughput_mbps[0, 0]) for d in (5.0, 9.0, 20.0, 100.0, 1e4)]
+    assert carried[0] == pytest.approx(5.0, rel=1e-3)
+    assert all(b >= a - 1e-9 for a, b in pairwise(carried))  # more demand never carries less (up to float noise)
+    assert carried[-1] == pytest.approx(10.0, rel=1e-3) and carried[-1] <= 10.0 + 1e-9
+
+
+def test_a_one_packet_buffer_under_enormous_load_does_not_overflow_or_nan() -> None:
+    r = simulate(extreme_chain(1e9, buf=1))
+    assert np.isfinite(r.flow_loss).all() and (r.flow_loss > 0.999).all() and np.isfinite(r.flow_delay_ms).all()
+
+
+def test_many_flows_sharing_one_link_never_exceed_its_capacity() -> None:
+    flows = [flow(f"f{i:02d}", "a", "b", 7.0) for i in range(60)]  # 420 Mbps offered to a 100 Mbps link
+    r = simulate(make([link("l", "a", "b", cap=100.0)], flows, duration=5.0))
+    assert (r.flow_throughput_mbps.sum(axis=1) <= 100.0 + 1e-6).all()
+    assert np.allclose(r.flow_throughput_mbps, r.flow_throughput_mbps[:, :1], rtol=1e-9)  # identical flows are treated identically
+    assert r.converged.all()
+
+
+def test_overloaded_poisson_traffic_is_reproducible_and_seed_sensitive() -> None:
+    def sc(seed: int) -> Scenario:
+        return make([link("l", "a", "b", cap=20.0)], [flow("f", "a", "b", 60.0)], kind="poisson", seed=seed)
+
+    assert simulate(sc(5)).digest() == simulate(sc(5)).digest() != simulate(sc(6)).digest()
+
+
+# ================================================================== S08: performance budget (docs/performance.md)
+# Worst of 3 repeated measurements on 2 interpreters (docs/performance.md): 7,300 steps/s; overloaded 3-hop chain 615 (10-step runs, setup included).
+MIN_SIMULATE_STEPS_PER_S = 2_000
+MIN_OVERLOADED_STEPS_PER_S = 150
+
+
+def _long_base(steps: int) -> Scenario:
+    return Scenario.model_validate({**BASE, "duration_s": float(steps)})
+
+
+@skip_perf
+def test_simulate_meets_the_steps_per_second_budget() -> None:
+    sc = _long_base(1000)
+    rate = best_rate(lambda: simulate(sc), 1000, target=budget(MIN_SIMULATE_STEPS_PER_S))
+    assert rate >= budget(MIN_SIMULATE_STEPS_PER_S), f"{rate:.0f} steps/s is below the budget of {budget(MIN_SIMULATE_STEPS_PER_S):.0f}"
+
+
+@skip_perf
+def test_simulation_time_grows_linearly_with_the_number_of_steps() -> None:
+    small, large = _long_base(500), _long_base(2000)
+    t_small = 500 / best_rate(lambda: simulate(small), 500, repeats=9)
+    t_large = 2000 / best_rate(lambda: simulate(large), 2000, repeats=9)
+    assert t_large / t_small < 4 * 1.8  # 4x the steps must cost well under 7.2x the time (quadratic growth would be 16x)
+
+
+@skip_perf
+def test_overload_makes_steps_slower_by_a_bounded_factor_and_stays_above_a_floor() -> None:
+    """Measured: an overloaded step needs about 40 fixed-point iterations instead of 2, so it costs about 12x (not free)."""
+    assert simulate(extreme_chain(1e9)).iterations.max() <= 100  # converges long before the cap of 200
+    normal = best_rate(lambda: simulate(extreme_chain(5.0)), 10, repeats=9)
+    heavy = best_rate(lambda: simulate(extreme_chain(1e9)), 10, target=budget(MIN_OVERLOADED_STEPS_PER_S))
+    assert normal / heavy < 40
+    assert heavy >= budget(MIN_OVERLOADED_STEPS_PER_S), f"{heavy:.0f} steps/s under overload"
+
+
+@skip_perf
+def test_more_flows_cost_roughly_proportionally_more() -> None:
+    def many(n: int) -> Scenario:
+        return make([link("l", "a", "b", cap=1000.0)], [flow(f"f{i:03d}", "a", "b", 1.0) for i in range(n)], duration=200.0)
+
+    few, lots = many(5), many(100)
+    t_few = 200 / best_rate(lambda: simulate(few), 200, repeats=9)
+    t_lots = 200 / best_rate(lambda: simulate(lots), 200, repeats=9)
+    assert t_lots / t_few < 20 * 2  # 20x the flows: at most about 40x the time, i.e. no hidden quadratic cost in the number of flows
