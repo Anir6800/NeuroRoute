@@ -37,11 +37,12 @@ Train the fixed-K masked routing policy on CPU with the Python 3.13 RL environme
 
 ```powershell
 cd backend
-..\.venv-rl\Scripts\python -m research.training.train --timesteps 10000 --max-episodes 10 --seeds 0 1 2 --threads 1
+..\.venv-rl\Scripts\python -m research.training.cli train --scenario normal --seed-count 3 --timesteps 10000 --max-episodes 10 --threads 1
 ```
 
-The harness requires at least three seeds per configuration, saves one checkpoint per seed, and records rewards, config hashes,
-git SHA, library versions and wall-clock time to local MLflow (`runs/mlflow/`). See [docs/training.md](docs/training.md).
+The CLI reserves suite train seeds for training and test seeds for evaluation, writes immutable config manifests, saves one
+checkpoint per seed, and records rewards, config hashes, git SHA, library versions and wall-clock time to local MLflow
+(`runs/mlflow/`). See [docs/training.md](docs/training.md).
 
 ## Environment variables
 
