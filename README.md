@@ -177,6 +177,10 @@ Run tests: `.venv\Scripts\python -m pytest -q`
 
 `experiments/configs/` holds six fixtures (steady `normal`, `diurnal_ramp`, `flash_crowd`, `link_down`, congestion hotspot `congested`, and the test-only `shift_test_only`) and `suite.json`, which fixes seed ranges before training (train 0-99, validation 100-109, test 1000-1029, disjoint) and pins every fixture's hash. `research.scenarios.load_suite().instance(name, split, i)` builds a scenario; the shift scenario is refused outside `test`. Flows can carry an optional `shape` (diurnal, or heavy-tailed on/off bursts). See [docs/scenarios.md](docs/scenarios.md). Tests: `pytest -q tests/test_scenarios.py` from `backend/`.
 
+## Topology API
+
+`/topologies` (create, get, list, update, validate) stores user-owned topologies in a local SQLite file. The route only delegates to a service (graph must be connected, no self-loops or duplicate links, positive capacity/delay, node/link limits from config), which uses a repository. Malformed JSON gives 422, an invalid graph 400 with machine-readable `reasons`, a stale `version` 409, no token 401. See [docs/topology_api.md](docs/topology_api.md). Tests: `pytest -q tests/test_topology_api.py` from `backend/`.
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): intended layering
@@ -184,4 +188,5 @@ Run tests: `.venv\Scripts\python -m pytest -q`
 - [docs/setup/local-machine.md](docs/setup/local-machine.md): machine audit
 - [docs/rl_contract.md](docs/rl_contract.md), [docs/research-protocol.md](docs/research-protocol.md): environment contract and experiment protocol
 - [docs/scenarios.md](docs/scenarios.md): scenario fixtures, seed splits, traffic shapes
+- [docs/topology_api.md](docs/topology_api.md): topology REST API
 - [docs/task_log.md](docs/task_log.md), [docs/codebase_audit.md](docs/codebase_audit.md)

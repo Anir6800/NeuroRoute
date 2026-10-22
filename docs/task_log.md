@@ -178,3 +178,10 @@
 - Seeds fixed up front: train 0-99, validation 100-109, test 1000-1029 (disjoint, validated). Fixture hashes pinned in `suite.json`. `shift_test_only` is refused outside the test split.
 - Tests: `test_scenarios.py` 69 passed + 2 skipped (shift x train/validation, intentionally not applicable); whole backend 467 passed, 3 skipped on `.venv` (3.15); `.venv-rl` (3.13) 446 passed, 2 skipped (API tests excluded: no fastapi/jwt there); root 87 passed; ruff clean. Determinism: every scenario x split gives identical simulate()+baseline digests on repeated runs and across processes with different PYTHONHASHSEED.
 - Mutation checks: 11 mutations over traffic/suite/models; 2 survived the first suite (start-off rule, burst-stream independence), tests added, all 11 now caught.
+
+## NR-D3-S06 - Connect topology API and backend schema (2026-10-22)
+- Added `backend/app/{api/topologies,api/errors,services/topologies,repositories/topologies,schemas/topology_api}.py`, settings (db path, limits), `backend/tests/test_topology_api.py`, `docs/topology_api.md`. Endpoints: create, get, list, update (optimistic concurrency, 409), validate; all behind the emulator-token auth; per-user ownership.
+- Tests: `test_topology_api.py` 54 passed; whole backend 521 passed, 3 skipped (`.venv`, 3.15); `.venv-rl` 446 passed, 2 skipped (API tests excluded: no fastapi/jwt there); root 87; ruff clean. A live uvicorn run on 127.0.0.1 confirmed 201/200/401/409/400 over real HTTP.
+- Real defect found by the tests: FastAPI's default 422 handler crashed with a 500 on a `NaN` literal while echoing the input; replaced with a sanitising handler. Also numeric fields were lax (a string "1" was accepted as a version); they are strict now.
+- Mutation checks: 19 mutations, 3 survived the first tests (links limit off-by-one, 503 message leak, service paging guard); tests added; all caught.
+- Research models and suite pins untouched (a test re-checks every pinned hash).

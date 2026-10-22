@@ -98,3 +98,11 @@
 - Poisson draws with a shape and a zero factor may consume no randomness, so downstream draws for that flow depend on the shape; each result is still deterministic.
 - Only one topology: the suite tests load, failure and burst handling, not topology generalisation. The "shift" is a dynamics shift on the same graph (needed so one trained policy's observation shape applies).
 - Fixture parameters (loads, alpha, periods) were chosen by me to give clear regimes; they are not calibrated to real traffic.
+
+## 2026-10-22 (NR-D3-S06)
+- Topologies are not yet used by the simulator or frontend; the API stores them only. Connection to scenarios (choose a stored topology for a run) is future work.
+- Weak connectivity is accepted; a stored topology may have pairs with no directed route.
+- No request-body size cap: a huge JSON body is parsed before the node/link limits apply. Fine on localhost, add a body-size limit before any wider use.
+- The global 422 handler replaces FastAPI's default for every route (the shape `{loc, msg, type}` is kept; `input` and `ctx` are dropped).
+- SQLite file default is `backend/.data/` (git-ignored); no migrations tool, schema is `CREATE TABLE IF NOT EXISTS`.
+- Auth tokens are the forgeable emulator kind (existing, documented); ownership checks inherit that weakness.

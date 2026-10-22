@@ -1,5 +1,6 @@
 from functools import lru_cache
 from ipaddress import ip_address
+from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,6 +24,11 @@ class Settings(BaseSettings):
     firebase_project_id: str = Field(default="demo-neuroroute", pattern=r"^demo-[a-z0-9-]+$")
     auth_emulator_host: str = "127.0.0.1:9099"
     allowed_roles: tuple[str, ...] = ("researcher", "admin")
+    # Topology API: local SQLite file (git-ignored) and size limits that bound request cost.
+    db_path: Path = Path(__file__).resolve().parents[2] / ".data" / "neuroroute.sqlite3"
+    db_timeout_s: float = Field(default=5.0, gt=0, le=60)
+    max_topology_nodes: int = Field(default=64, ge=2, le=10_000)
+    max_topology_links: int = Field(default=512, ge=1, le=100_000)
 
     @field_validator("host")
     @classmethod

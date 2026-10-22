@@ -5,7 +5,7 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD = NR-D3-S05 commit on top of 942def8 (S04) and 2c61240 (S03); tree clean as of NR-D3-S04 start (earlier: ffed6f1 S02, d928d4b S01). REMOTE: origin = https://github.com/Anir6800/NeuroRoute.git was added by the user outside my sessions; origin/main is at 667a184 and local main is 8 commits ahead. I do NOT push unless the user asks (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD = NR-D3-S06 commit on top of 9060151 (S05), 942def8 (S04), 2c61240 (S03); tree clean as of NR-D3-S04 start (earlier: ffed6f1 S02, d928d4b S01). REMOTE: origin = https://github.com/Anir6800/NeuroRoute.git was added by the user outside my sessions; origin/main is at 667a184 and local main is 8 commits ahead. I do NOT push unless the user asks (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
 - One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next task after NR-D2-S08 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
@@ -291,3 +291,22 @@ Never log secrets here.
 - Result (2026-10-22): `.venv` backend pytest: 467 passed, 3 skipped; `.venv-rl` (API tests excluded, no fastapi/jwt): 446 passed, 2 skipped; root tests 87 passed; ruff clean; git diff --check clean (CRLF warnings only). test_scenarios.py: 69 passed, 2 skipped (not-applicable shift splits). Frontend untouched, not re-run. Determinism verified per scenario x split and across processes with different PYTHONHASHSEED. Regimes confirmed with the static baseline (normal peak load 0.73; hotspot 1.65 with the other path idle; link_down reroutes at 20 s and back at 45 s).
 - Mutation checks: 11 mutations; first run left 2 alive (start-off rule, burst stream independence); tests added; all caught; sources restored.
 - Risks: schema version not bumped for the additive `shape`; fixture parameters are my choices, not calibrated; one topology only; shift is a dynamics shift on the same graph.
+
+### NR-D3-S06 - Connect topology API and backend schema
+- Status: DONE (committed after verification; not pushed)
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (HEAD 9060151, tree clean). Not pushing.
+- Scope: backend/app/{api/topologies.py, services/topologies.py, repositories/topologies.py, schemas/topology_api.py, api/errors.py}, core/config.py (limits + db path), main.py (router + exception handlers), backend/tests/test_topology_api.py, docs/topology_api.md, README.md, task_log, audit.
+- Carry-over honoured: the research Scenario/Node/Link models are NOT touched, so the hashes pinned in experiments/configs/suite.json cannot change (a test re-checks the suite loads). The API defines its own request models (permissive on numeric ranges so the SERVICE reports reasons) and builds research Node/Link only from validated data. No seed-drawing code is added.
+- Design decisions made up front:
+  * Topology = nodes + links (no flows/failures); stored per owner (uid), 404 for other users' ids. Server-generated uuid id, integer `version` starting at 1, `content_hash` (sha256 of canonical JSON), `schema_version` "1.0".
+  * Endpoints: POST /topologies (create), GET /topologies (list, limit/offset), GET /topologies/{id}, PUT /topologies/{id} (body carries `version`; stale -> 409), POST /topologies/validate (validate only). All behind current_user.
+  * 422 = malformed (types, unknown fields, bad JSON). 400 = well-formed but invalid graph: {"detail":{"code":"invalid_topology","reasons":[{code,message,path}]}} listing ALL reasons. Reasons: too_few_nodes/links, too_many_nodes/links (limits from Settings, checked first), invalid_*_id, duplicate_node_id/link_id/link (same directed endpoints), unknown_endpoint, self_loop, non_positive_capacity/delay/buffer, negative_weight, disconnected.
+  * Connectivity = WEAK (ignoring direction): the existing fixtures are one-way a->r->b diamonds and would fail strong connectivity. Documented.
+  * Positive delay (>0) is stricter than the research Link (>=0) as the task requires.
+  * Route -> Service -> Repository -> sqlite3 (stdlib, explicit 5 s timeout, db file under backend/.data, git-ignored by *.sqlite3). Domain errors are mapped to HTTP in api/errors.py exception handlers so routes only delegate. Optimistic concurrency via UPDATE ... WHERE version=? (atomic).
+- Planned paths: as Scope above.
+- Baseline evidence: backend 467 passed + 3 skipped (3.15), root 87 (NR-D3-S05 close). Dev stack not running.
+- Result (2026-10-22): test_topology_api.py 54 passed; `.venv` backend pytest 521 passed, 3 skipped; `.venv-rl` (API tests excluded) 446 passed, 2 skipped; root 87 passed; ruff clean; git diff --check clean (CRLF warnings only). Live uvicorn on 127.0.0.1:8011 with a temp DB: create 201, get 200, list total 1, no token 401, update 200, stale 409, non-positive capacity -> reason non_positive_capacity. Frontend untouched, not re-run. Suite pins unchanged (test loads every pinned fixture).
+- Defects found by my tests and fixed: (1) a NaN literal made FastAPI's default 422 handler crash (500) while echoing input -> sanitising RequestValidationError handler; (2) lax numeric parsing accepted version "1" -> strict numeric fields. Three test bugs of mine (self-referencing lambda, router 404 body shape, dead code).
+- Mutation checks: 19 mutations over service/repository/errors/schema; 3 survived (links limit >=, 503 message leak, service paging guard); tests added; all caught; sources restored.
+- Risks: no body-size cap; weak connectivity only; topologies not yet wired to simulator/frontend; emulator tokens are forgeable (existing).
