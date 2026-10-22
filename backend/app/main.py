@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api import me, topologies
+from app.api import experiments, me, topologies
 from app.api.errors import register_error_handlers
 from app.core.config import get_settings
 
@@ -8,6 +8,7 @@ settings = get_settings()
 app = FastAPI(title=settings.app_name, version=settings.version)
 app.include_router(me.router)
 app.include_router(topologies.router)
+app.include_router(experiments.router)
 register_error_handlers(app)
 
 

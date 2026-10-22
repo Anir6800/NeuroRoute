@@ -1,5 +1,9 @@
 # Task log
 
+## NR-D4-S04 — Expose async experiment job API (2026-10-22)
+- Added `POST /experiments/train`, polling and cancellation endpoints backed by one bounded local OS subprocess. Requests are authenticated, suite/config paths are server-owned, and seeds, timesteps, episodes and candidate-path counts are capped before launch.
+- Tests: focused API lifecycle tests cover polling, overlap rejection, cancellation, timeout, and server-side budgets. A real 8-timestep, three-seed API smoke reached `done` in 13.9 s using the separate `.venv-rl` process. Final checks: backend `pytest -q` 596 passed, 6 skipped (54.23 s), Ruff clean; frontend 125 tests passed, typecheck, production build and lint clean. Child-process unit tests use a fake process, so they do not train models.
+
 ## NR-D1-S01 — Install and audit local tools (2026-10-21)
 - Created: `docs/setup/local-machine.md`, `docs/task_log.md`, `docs/codebase_audit.md`, `ai-memory.md`
 - Tests/build: none exist (empty repo). Only verification was the audit commands listed in local-machine.md.

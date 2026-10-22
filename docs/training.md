@@ -34,3 +34,14 @@ two four-step episodes and eight timesteps per seed; it proves local tracking an
 configuration, their hashes, the suite path/split/seeds and every generated checkpoint. `evaluate` writes an immutable JSON
 report under `results/` with the held-out seed, scenario hash, reward and termination outcome. Run both commands together in
 Git Bash with `scripts/train-smoke.sh`; it trains seeds 0/1/2, then evaluates seed 1000.
+
+## Local job API
+
+`POST /experiments/train` starts the existing training CLI in a separate `.venv-rl` OS process and immediately returns
+`202 {"job_id", "status"}`. Poll `GET /experiments/{job_id}` until it reaches `done`, `failed`, or `cancelled`; use
+`POST /experiments/{job_id}/cancel` to stop a live job. The API never imports Torch or runs training in an HTTP handler.
+
+Only the fixed training suite and default environment config are accepted. Server-side limits are 3--5 seeds, 1--100,000
+timesteps, 1--1,000 episodes, and 1--16 candidate paths; one local job can run for at most 15 minutes. Every request writes
+its derived immutable environment config and artifacts under `runs/jobs/<job_id>/`; source experiment configs are unchanged.
+Override these localhost-only budgets with `NEUROROUTE_MAX_TRAINING_*` or `NEUROROUTE_TRAINING_TIMEOUT_S` when needed.

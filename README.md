@@ -45,6 +45,10 @@ checkpoint per seed under `models/`, and records SHA-256, config hashes, git SHA
 metric arrays in local SQLite/Parquet (`experiments/results/`); local MLflow remains under `runs/mlflow/`. See
 [docs/training.md](docs/training.md).
 
+The local API also exposes bounded asynchronous training jobs: `POST /experiments/train` returns a job id, then
+`GET /experiments/{job_id}` polls it and `POST /experiments/{job_id}/cancel` stops it. It starts the Python 3.13 RL
+CLI as a child process, accepts one job at a time, and keeps its generated data under `runs/jobs/`.
+
 ## Environment variables
 
 Read by `backend/app/core/config.py` (prefix `NEUROROUTE_`, optional `backend/.env`, git-ignored; template in `backend/.env.example`):

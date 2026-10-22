@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     db_timeout_s: float = Field(default=5.0, gt=0, le=60)
     max_topology_nodes: int = Field(default=64, ge=2, le=10_000)
     max_topology_links: int = Field(default=512, ge=1, le=100_000)
+    # Training stays outside the API interpreter: it needs the Python 3.13 RL environment.
+    training_python: Path = Path(__file__).resolve().parents[3] / ".venv-rl" / "Scripts" / "python.exe"
+    training_jobs_dir: Path = Path(__file__).resolve().parents[3] / "runs" / "jobs"
+    training_timeout_s: int = Field(default=900, ge=1, le=86_400)
+    max_training_timesteps: int = Field(default=100_000, ge=1, le=1_000_000)
+    max_training_episodes: int = Field(default=1_000, ge=1, le=1_000)
+    max_training_seeds: int = Field(default=5, ge=3, le=100)
+    max_training_path_count: int = Field(default=16, ge=1, le=1024)
 
     @field_validator("host")
     @classmethod
