@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 
@@ -22,6 +23,8 @@ from research.simulation.traffic import offered_load
 
 __all__ = [
     "SimulationResult",
+    "StepMetrics",
+    "evaluate_step",
     "exact_mm1k_sojourn",
     "link_delay_breakdown",
     "mm1_sojourn_clamped",
@@ -350,4 +353,119 @@ def simulate(scenario: Scenario, *, step_s: float = 1.0, seed: int | None = None
         flow_offered_mbps=load_in.rates_mbps, flow_delay_ms=flow_delay, flow_loss=flow_loss,
         flow_throughput_mbps=flow_thr, converged=converged, iterations=iterations, route_state=route_state,
         route_states=tuple(states),
+    )
+
+
+# --------------------------------------------------------------------------- one-step evaluator
+@dataclass(frozen=True, eq=False)
+class StepMetrics:
+    """Metrics of ONE step for a given routing. Arrays are indexed by sorted link / flow id."""
+
+    link_ids: tuple[str, ...]
+    flow_ids: tuple[str, ...]
+    link_up: np.ndarray
+    link_offered_rho: np.ndarray
+    link_loss: np.ndarray
+    link_delay_ms: np.ndarray  # NaN for links that are down
+    link_carried_mbps: np.ndarray
+    flow_delay_ms: np.ndarray  # delivered-weighted mean over the flow's paths; NaN if nothing is routed/delivered
+    flow_loss: np.ndarray  # 1 - sum(fraction * survival); 1.0 if offered but not routed
+    flow_throughput_mbps: np.ndarray
+    converged: bool
+    iterations: int
+
+
+def evaluate_step(
+    scenario: Scenario,
+    routing: Mapping[str, Sequence[tuple[Sequence[str], float]]],
+    offered_mbps: Mapping[str, float],
+    up_links: Iterable[str] | None = None,
+) -> StepMetrics:
+    """Evaluate one step under an explicit routing, with exactly the S01 model (docs/sim_model.md).
+
+    routing:      flow id -> [(link-id path, fraction), ...]; fractions > 0 summing to 1 (ECMP splits traffic
+                  by fraction); a flow that is missing or has no entries is not routed.
+    offered_mbps: flow id -> offered rate this step; missing flows offer 0.
+    up_links:     link ids that are up (default: all). Routing over a down or unknown link is rejected.
+    """
+    links = sorted(scenario.links, key=lambda lk: lk.id)
+    link_index = {lk.id: i for i, lk in enumerate(links)}
+    flow_ids = tuple(sorted(f.id for f in scenario.flows))
+    up_set = set(link_index) if up_links is None else set(up_links)
+    unknown = up_set - set(link_index)
+    if unknown:
+        raise ValueError(f"unknown link ids in up_links: {sorted(unknown)}")
+    for fid, rate in offered_mbps.items():
+        if fid not in flow_ids:
+            raise ValueError(f"offered_mbps names unknown flow {fid!r}")
+        if not math.isfinite(rate) or rate < 0:
+            raise ValueError(f"offered rate of {fid!r} must be finite and >= 0")
+    for fid in routing:
+        if fid not in flow_ids:
+            raise ValueError(f"routing names unknown flow {fid!r}")
+
+    pkt_bytes = scenario.traffic.packet_size_bytes
+    pkt_bits = 8.0 * pkt_bytes
+    capacity_mbps = np.array([lk.capacity_mbps for lk in links])
+    mu = capacity_mbps * 1e6 / pkt_bits
+    k = np.array([lk.buffer_pkts for lk in links], dtype=np.float64)
+    prop_ms = np.array([lk.prop_delay_ms for lk in links])
+    up = np.array([lk.id in up_set for lk in links], dtype=np.bool_)
+
+    rows: list[tuple[int, tuple[int, ...], float]] = []  # (flow index, link indices, fraction)
+    for fi, fid in enumerate(flow_ids):
+        splits = list(routing.get(fid, ()))
+        if not splits:
+            continue
+        if any(not (f > 0 and math.isfinite(f)) for _, f in splits) or not math.isclose(sum(f for _, f in splits), 1.0, abs_tol=1e-9):
+            raise ValueError(f"fractions of flow {fid!r} must be > 0 and sum to 1")
+        for path, frac in splits:
+            if not path:
+                raise ValueError(f"empty path for flow {fid!r}")
+            for lid in path:
+                if lid not in link_index:
+                    raise ValueError(f"flow {fid!r} routed over unknown link {lid!r}")
+                if lid not in up_set:
+                    raise ValueError(f"flow {fid!r} routed over link {lid!r} which is down")
+            rows.append((fi, tuple(link_index[lid] for lid in path), float(frac)))
+
+    n_rows = len(rows)
+    hops = max((len(r[1]) for r in rows), default=0)
+    hop_idx = np.zeros((n_rows, hops), dtype=np.int64)
+    valid = np.zeros((n_rows, hops), dtype=np.bool_)
+    for i, (_, p, _) in enumerate(rows):
+        hop_idx[i, : len(p)] = p
+        valid[i, : len(p)] = True
+    routes = _Routes(tuple(r[1] for r in rows), hop_idx, valid, np.ones(n_rows, dtype=np.bool_))
+    offered_pps = np.array([offered_mbps.get(flow_ids[r[0]], 0.0) * r[2] * 1e6 / pkt_bits for r in rows])
+
+    load, blocking, survival, iters, ok = _solve_step(offered_pps, routes, up, mu, k)
+    delay_ms = link_delay_breakdown(prop_ms, capacity_mbps, pkt_bytes, load, k)["total_ms"]
+    link_delay = np.where(up, delay_ms, np.nan)
+
+    n_flows = len(flow_ids)
+    flow_delay = np.full(n_flows, np.nan)
+    flow_loss = np.zeros(n_flows)
+    flow_thr = np.zeros(n_flows)
+    by_flow: dict[int, list[int]] = {}
+    for i, r in enumerate(rows):
+        by_flow.setdefault(r[0], []).append(i)
+    for fi, fid in enumerate(flow_ids):
+        offered = offered_mbps.get(fid, 0.0)
+        idxs = by_flow.get(fi)
+        if not idxs:
+            flow_loss[fi] = 1.0 if offered > 0 else 0.0
+            continue
+        delivered = sum(rows[i][2] * survival[i] for i in idxs)
+        flow_loss[fi] = 1.0 - delivered
+        flow_thr[fi] = offered * delivered
+        if delivered > 0:
+            flow_delay[fi] = sum(rows[i][2] * survival[i] * float(np.sum(link_delay[list(rows[i][1])])) for i in idxs) / delivered
+
+    return StepMetrics(
+        link_ids=tuple(lk.id for lk in links), flow_ids=flow_ids, link_up=up,
+        link_offered_rho=np.where(up, load / mu, 0.0), link_loss=np.where(up, blocking, 0.0),
+        link_delay_ms=link_delay, link_carried_mbps=np.where(up, load * (1.0 - blocking) * pkt_bits / 1e6, 0.0),
+        flow_delay_ms=flow_delay, flow_loss=flow_loss, flow_throughput_mbps=flow_thr,
+        converged=bool(ok), iterations=int(iters),
     )

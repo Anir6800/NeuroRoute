@@ -82,6 +82,10 @@ result = simulate(scenario, step_s=1.0)   # from backend/, with a validated Scen
 ```
 Tests (analytic theory, determinism, disconnected graphs, rerouting): `cd backend; ..\.venv\Scripts\python -m pytest -q tests\test_simulation.py`.
 
+## Baseline routing policies
+
+`backend/research/baselines/` has one `Policy` interface and five implementations: static Dijkstra, ECMP (equal split over all equal-cost paths), congestion-aware (path cost = observed delay, with a minimum hold time and a switch margin so it does not flap), and two evaluation-only bounds: random-valid (a floor) and oracle (tries every path under the simulator; per-flow best response, not a global optimum). Ties are broken by lexicographic link ids; every decision is validated as a simple path over the links that are up. Details, measured flap counts and caveats: [docs/baselines.md](docs/baselines.md). Results are simulated estimates. Tests: run `pytest -q tests/test_baselines.py` from `backend/` with the repo `.venv` (also passes under `.venv-rl`).
+
 ## Auth (Firebase Auth emulator, local only)
 
 Project `demo-neuroroute`, emulator at `127.0.0.1:9099` (`firebase.json`, `.firebaserc`). No real Firebase project, hosting or credentials are used.

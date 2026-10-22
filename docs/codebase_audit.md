@@ -77,3 +77,8 @@
 ## 2026-10-22 (NR-D3-S01)
 - First model code. It is analytic and open-loop; its numbers are estimates, not measurements, and must be labelled simulated.
 - Risks: delay is conservative near saturation (see the error table); byte-identical results depend on the numpy version (golden digest test will flag a numpy upgrade that changes Poisson draws: re-verify, then update the digest and docs together); fixed-point convergence is empirical, not proven (flag recorded per step); Python loops over steps and flows are fine for the MVP but would need vectorising for very large scenarios.
+
+## 2026-10-22 (NR-D3-S02)
+- Policies and a closed-loop runner exist; nothing in the API or UI calls them yet.
+- Risks: the oracle and random-valid depend on a candidate cap (64 / 256) so very path-rich graphs are only partly searched; the oracle is greedy per flow; hysteresis defaults (5 s, 0.1) are untuned; policies assume one packet size and instant failure reaction (inherited from the simulator model).
+- Script hazard (dev-neuro.sh stop): it kills whatever the PID file lists; after a reboot those PIDs may belong to unrelated processes. Mitigation idea: record and check the process start time or command line before killing. Not fixed in this task.
