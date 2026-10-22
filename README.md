@@ -86,6 +86,10 @@ Tests (analytic theory, determinism, disconnected graphs, rerouting): `cd backen
 
 `backend/research/baselines/` has one `Policy` interface and five implementations: static Dijkstra, ECMP (equal split over all equal-cost paths), congestion-aware (path cost = observed delay, with a minimum hold time and a switch margin so it does not flap), and two evaluation-only bounds: random-valid (a floor) and oracle (tries every path under the simulator; per-flow best response, not a global optimum). Ties are broken by lexicographic link ids; every decision is validated as a simple path over the links that are up. Details, measured flap counts and caveats: [docs/baselines.md](docs/baselines.md). Results are simulated estimates. Tests: run `pytest -q tests/test_baselines.py` from `backend/` with the repo `.venv` (also passes under `.venv-rl`).
 
+## K candidate paths (the action space)
+
+`backend/research/simulation/candidates.py` turns (source, target, live links) into exactly K action slots: the K cheapest loop-free paths from Yen's algorithm, ordered by (cost, link ids) with a canonical tie-break, padded and masked when fewer than K exist. A disconnected pair has zero unmasked actions: the environment must terminate the episode with penalty `-remaining_steps` (and use `safe_mask()` for the terminal observation). Property tests (hypothesis) prove every unmasked action is a valid simple path under random link failures and the mask is non-empty exactly when the pair is connected; 14,504 candidate sets are also checked exhaustively on 7 benchmark graphs. See [docs/candidates.md](docs/candidates.md). Tests: run `pytest -q tests/test_candidates.py` from `backend/` (needs `hypothesis`).
+
 ## Auth (Firebase Auth emulator, local only)
 
 Project `demo-neuroroute`, emulator at `127.0.0.1:9099` (`firebase.json`, `.firebaserc`). No real Firebase project, hosting or credentials are used.

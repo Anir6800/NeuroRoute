@@ -82,3 +82,7 @@
 - Policies and a closed-loop runner exist; nothing in the API or UI calls them yet.
 - Risks: the oracle and random-valid depend on a candidate cap (64 / 256) so very path-rich graphs are only partly searched; the oracle is greedy per flow; hysteresis defaults (5 s, 0.1) are untuned; policies assume one packet size and instant failure reaction (inherited from the simulator model).
 - Script hazard (dev-neuro.sh stop): it kills whatever the PID file lists; after a reboot those PIDs may belong to unrelated processes. Mitigation idea: record and check the process start time or command line before killing. Not fixed in this task.
+
+## 2026-10-22 (NR-D3-S03)
+- Two Yen-based path enumerations now exist (baselines Topology.simple_paths and candidates.py); a test keeps them consistent on integer-weight graphs, but they should be merged when the environment lands.
+- Risks: candidate ordering is by static weight (the best path under load may fall outside the K cheapest on route-rich graphs); the no-route penalty convention is unproven until a reward function uses it; property-test runtime is about 10 s per interpreter.

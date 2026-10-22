@@ -43,3 +43,6 @@ design/stitch/screens/**/*.html
 
 # UI audit output (screenshots, audit.json)
 .ui-audit/
+
+# hypothesis example database (local, regenerable)
+.hypothesis/
