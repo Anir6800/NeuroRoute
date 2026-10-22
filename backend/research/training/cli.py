@@ -12,6 +12,7 @@ from sb3_contrib import MaskablePPO
 from research.environments.config import EnvConfig
 from research.environments.routing_env import RoutingEnv
 from research.scenarios.suite import Split, load_suite
+from research.training.tracker import validate_checkpoint
 from research.training.train import ROOT, RunResult, TrainingConfig, run_training
 
 
@@ -38,7 +39,7 @@ def _train(args: argparse.Namespace) -> tuple[RunResult, ...]:
         raise ValueError("train requires at least three suite train seeds")
     config = TrainingConfig(
         seeds=seeds, total_timesteps=args.timesteps, max_episodes=args.max_episodes, threads=args.threads,
-        output_dir=args.output_dir, mlflow_dir=args.mlflow_dir,
+        output_dir=args.output_dir, results_dir=args.results_dir, mlflow_dir=args.mlflow_dir,
     )
     results = run_training(scenario, env_config, config)
     _write_json(args.output_dir / "training-manifest.json", {
@@ -55,11 +56,13 @@ def _evaluate(args: argparse.Namespace) -> dict[str, object]:
     if args.scenario not in suite.names("test"):
         raise ValueError(f"{args.scenario!r} is not a test scenario")
     env_config, seeds = EnvConfig.from_json(args.env_config), _seeds("test", args.seed_count, args.suite)
-    model = MaskablePPO.load(args.checkpoint, device="cpu")
     episodes = []
     for index, seed in enumerate(seeds):
         scenario = suite.instance(args.scenario, "test", index)
         env = RoutingEnv(scenario, env_config)
+        if index == 0:
+            validate_checkpoint(args.checkpoint, env)
+            model = MaskablePPO.load(args.checkpoint, device="cpu")
         observation, _ = env.reset(seed=seed)
         reward, steps, terminated, truncated = 0.0, 0, False, False
         while not (terminated or truncated):
@@ -93,7 +96,8 @@ def _parser() -> argparse.ArgumentParser:
     train.add_argument("--timesteps", type=int, default=100_000)
     train.add_argument("--max-episodes", type=int, default=100)
     train.add_argument("--threads", type=int, default=1)
-    train.add_argument("--output-dir", type=Path, default=ROOT / "checkpoints" / "ppo")
+    train.add_argument("--output-dir", type=Path, default=ROOT / "models" / "ppo")
+    train.add_argument("--results-dir", type=Path, default=ROOT / "experiments" / "results")
     train.add_argument("--mlflow-dir", type=Path, default=ROOT / "runs" / "mlflow")
     train.set_defaults(handler=_train)
 

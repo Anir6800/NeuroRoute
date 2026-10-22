@@ -18,6 +18,7 @@ from research.agents.ppo_agent import PPOConfig, build_maskable_ppo, seed_everyt
 from research.environments.config import EnvConfig
 from research.environments.routing_env import RoutingEnv
 from research.simulation.models import Scenario
+from research.training.tracker import ExperimentTracker
 
 __all__ = ["MAX_TRAINING_EPISODES", "RunResult", "TrainingConfig", "run_training"]
 
@@ -31,7 +32,8 @@ class TrainingConfig:
     total_timesteps: int = 100_000
     max_episodes: int = 100
     threads: int = 1
-    output_dir: Path = ROOT / "checkpoints" / "ppo"
+    output_dir: Path = ROOT / "models" / "ppo"
+    results_dir: Path = ROOT / "experiments" / "results"
     mlflow_dir: Path = ROOT / "runs" / "mlflow"
     experiment_name: str = "neuroroute-maskableppo"
     ppo: PPOConfig = field(default_factory=PPOConfig)
@@ -65,6 +67,7 @@ class _EpisodeCallback(BaseCallback):
         self.max_episodes = max_episodes
         self.episodes = 0
         self.episode_reward = 0.0
+        self.episode_rewards: list[float] = []
 
     def _on_step(self) -> bool:
         self.episode_reward += float(np.asarray(self.locals["rewards"])[0])
@@ -72,6 +75,7 @@ class _EpisodeCallback(BaseCallback):
             self.episodes += 1
             mlflow.log_metric("episode_reward", self.episode_reward, step=self.num_timesteps)
             mlflow.log_metric("episodes", self.episodes, step=self.num_timesteps)
+            self.episode_rewards.append(self.episode_reward)
             self.episode_reward = 0.0
         return self.episodes < self.max_episodes
 
@@ -114,6 +118,7 @@ def run_training(scenario: Scenario, env_config: EnvConfig, config: TrainingConf
     config = config or TrainingConfig()
     config.output_dir.mkdir(parents=True, exist_ok=True)
     config.mlflow_dir.mkdir(parents=True, exist_ok=True)
+    tracker = ExperimentTracker(config.results_dir)
     experiment_id = _configure_mlflow(config)
     results = []
     for seed in config.seeds:
@@ -127,11 +132,19 @@ def run_training(scenario: Scenario, env_config: EnvConfig, config: TrainingConf
             model = build_maskable_ppo(env, seed=seed, config=config.ppo)
             model.learn(total_timesteps=config.total_timesteps, callback=callback, progress_bar=False)
             elapsed = time.perf_counter() - started
-            checkpoint = config.output_dir / f"{scenario.name}-seed-{seed}"
+            checkpoint = config.output_dir / f"{scenario.name}-seed-{seed}-{run.info.run_id}"
             model.save(checkpoint)
             checkpoint = checkpoint.with_suffix(".zip")
             mlflow.log_metrics({"wall_clock_s": elapsed, "timesteps": model.num_timesteps, "episodes_completed": callback.episodes})
             mlflow.log_artifact(str(checkpoint), artifact_path="checkpoints")
+            params = _parameters(scenario, env_config, config, seed)
+            tracker.record(
+                checkpoint=checkpoint, scenario_config_hash=scenario.config_hash, env_config_hash=env_config.config_hash(),
+                git_sha=params["git_sha"], seed=seed, env=env,
+                library_versions={key.removeprefix("version."): value for key, value in params.items() if key.startswith("version.")},
+                metrics={"episode_reward": callback.episode_rewards, "wall_clock_s": elapsed, "timesteps": model.num_timesteps,
+                         "episodes_completed": callback.episodes},
+            )
             results.append(RunResult(seed, run.info.run_id, checkpoint, callback.episodes, model.num_timesteps, elapsed))
         env.close()
     return tuple(results)
@@ -145,7 +158,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--timesteps", type=int, default=100_000)
     parser.add_argument("--max-episodes", type=int, default=100)
     parser.add_argument("--threads", type=int, default=1)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "checkpoints" / "ppo")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "models" / "ppo")
+    parser.add_argument("--results-dir", type=Path, default=ROOT / "experiments" / "results")
     parser.add_argument("--mlflow-dir", type=Path, default=ROOT / "runs" / "mlflow")
     return parser.parse_args()
 
@@ -156,7 +170,7 @@ def main() -> None:
     env_config = EnvConfig.from_json(args.env_config)
     results = run_training(scenario, env_config, TrainingConfig(
         seeds=tuple(args.seeds), total_timesteps=args.timesteps, max_episodes=args.max_episodes, threads=args.threads,
-        output_dir=args.output_dir, mlflow_dir=args.mlflow_dir,
+        output_dir=args.output_dir, results_dir=args.results_dir, mlflow_dir=args.mlflow_dir,
     ))
     for result in results:
         print(f"seed={result.seed} episodes={result.episodes} timesteps={result.timesteps} wall_clock_s={result.wall_clock_s:.2f} checkpoint={result.checkpoint}")

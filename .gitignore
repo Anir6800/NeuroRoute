@@ -28,6 +28,12 @@ tensorboard/
 *.pt
 *.sqlite3
 *.db
+!experiments/
+!experiments/results/
+experiments/results/*
+!experiments/results/.gitkeep
+models/*
+!models/.gitkeep
 
 # Firebase emulator logs
 *-debug.log

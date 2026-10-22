@@ -30,7 +30,8 @@ def test_train_writes_an_immutable_input_manifest(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(cli, "run_training", lambda *_: (RunResult(0, "run", checkpoint, 1, 60, 0.1), RunResult(1, "run", checkpoint, 1, 60, 0.1), RunResult(2, "run", checkpoint, 1, 60, 0.1)))
     output = tmp_path / "checkpoints"
     args = argparse.Namespace(suite=SUITE, scenario="normal", env_config=ENV_CONFIG, seed_count=3, timesteps=60,
-                              max_episodes=1, threads=1, output_dir=output, mlflow_dir=tmp_path / "mlflow")
+                              max_episodes=1, threads=1, output_dir=output, results_dir=tmp_path / "results",
+                              mlflow_dir=tmp_path / "mlflow")
     cli._train(args)
     manifest = json.loads((output / "training-manifest.json").read_text(encoding="utf-8"))
     assert manifest["split"] == "train" and manifest["seeds"] == [0, 1, 2]

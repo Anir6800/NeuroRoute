@@ -41,8 +41,9 @@ cd backend
 ```
 
 The CLI reserves suite train seeds for training and test seeds for evaluation, writes immutable config manifests, saves one
-checkpoint per seed, and records rewards, config hashes, git SHA, library versions and wall-clock time to local MLflow
-(`runs/mlflow/`). See [docs/training.md](docs/training.md).
+checkpoint per seed under `models/`, and records SHA-256, config hashes, git SHA, versions, action/observation signatures and
+metric arrays in local SQLite/Parquet (`experiments/results/`); local MLflow remains under `runs/mlflow/`. See
+[docs/training.md](docs/training.md).
 
 ## Environment variables
 

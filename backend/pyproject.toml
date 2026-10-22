@@ -7,7 +7,7 @@ dependencies = ["fastapi", "uvicorn", "pydantic-settings", "firebase-admin", "ne
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx", "ruff", "hypothesis"]
-rl = ["torch", "stable-baselines3", "sb3-contrib", "mlflow"]
+rl = ["torch", "stable-baselines3", "sb3-contrib", "mlflow", "pandas", "pyarrow"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -10,10 +10,12 @@ windows_path() {
 }
 
 PYTHON="$ROOT/.venv-rl/Scripts/python.exe"
-OUT="$(windows_path "$ROOT/checkpoints/train-smoke")"
+OUT="$(windows_path "$ROOT/models/train-smoke")"
 MLFLOW="$(windows_path "$ROOT/runs/train-smoke")"
+RESULTS="$(windows_path "$ROOT/experiments/results")"
 RESULT="$(windows_path "$ROOT/results/train-smoke-evaluation.json")"
 
 cd "$ROOT/backend"
-"$PYTHON" -m research.training.cli train --scenario normal --seed-count 3 --timesteps 65 --max-episodes 1 --threads 1 --output-dir "$OUT" --mlflow-dir "$MLFLOW"
-"$PYTHON" -m research.training.cli evaluate --scenario normal --seed-count 1 --checkpoint "$OUT\\normal-seed-0.zip" --output "$RESULT"
+"$PYTHON" -m research.training.cli train --scenario normal --seed-count 3 --timesteps 65 --max-episodes 1 --threads 1 --output-dir "$OUT" --results-dir "$RESULTS" --mlflow-dir "$MLFLOW"
+CHECKPOINT="$("$PYTHON" -c "import json, sys; print(json.load(open(sys.argv[1], encoding='utf-8'))['runs'][0]['checkpoint'])" "$OUT\\training-manifest.json" | tr -d '\r')"
+"$PYTHON" -m research.training.cli evaluate --scenario normal --seed-count 1 --checkpoint "$CHECKPOINT" --output "$RESULT"
