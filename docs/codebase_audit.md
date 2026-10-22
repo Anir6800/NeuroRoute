@@ -92,3 +92,9 @@
 - Only one flow is controlled; others use a fixed background policy. Observations use previous-step link metrics (no future leakage, tested).
 - A masked action is substituted rather than rejected (required for gymnasium check_env); masked policies never trigger it.
 - `.venv-rl` lacks fastapi/jwt, so run the API tests under `.venv` only.
+
+## 2026-10-22 (NR-D3-S05)
+- Schema 1.0 gained an optional `Flow.shape`. It is backward compatible (hash and traffic of scenarios without it are unchanged, tested), but the version string was not bumped; a v2 would be cleaner if the schema grows further.
+- Poisson draws with a shape and a zero factor may consume no randomness, so downstream draws for that flow depend on the shape; each result is still deterministic.
+- Only one topology: the suite tests load, failure and burst handling, not topology generalisation. The "shift" is a dynamics shift on the same graph (needed so one trained policy's observation shape applies).
+- Fixture parameters (loads, alpha, periods) were chosen by me to give clear regimes; they are not calibrated to real traffic.

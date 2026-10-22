@@ -173,10 +173,15 @@ Run tests: `.venv\Scripts\python -m pytest -q`
 
 `backend/research/environments/routing_env.py` exposes the simulator as a `gymnasium.Env`: `Discrete(K)` over the K candidate paths (invalid slots masked, `action_masks()` for MaskablePPO), a fixed-size `Box(0,1)` observation (link utilisation, queue delay, src/dst one-hot, previous action, per-candidate features; 37 values on the base scenario), and `reward = -w_delay*delay - w_loss*loss - w_churn*route_change` with every weight in `experiments/configs/env_default.json` (placeholders, untuned). Disconnection terminates with a penalty; the scenario end truncates. Same seed gives identical trajectories. Spec: [docs/rl_contract.md](docs/rl_contract.md); experiment rules: [docs/research-protocol.md](docs/research-protocol.md). Tests: `pytest -q tests/test_routing_env.py` from `backend/` (the Stable-Baselines3 test runs only under `.venv-rl`).
 
+## Scenario suite
+
+`experiments/configs/` holds six fixtures (steady `normal`, `diurnal_ramp`, `flash_crowd`, `link_down`, congestion hotspot `congested`, and the test-only `shift_test_only`) and `suite.json`, which fixes seed ranges before training (train 0-99, validation 100-109, test 1000-1029, disjoint) and pins every fixture's hash. `research.scenarios.load_suite().instance(name, split, i)` builds a scenario; the shift scenario is refused outside `test`. Flows can carry an optional `shape` (diurnal, or heavy-tailed on/off bursts). See [docs/scenarios.md](docs/scenarios.md). Tests: `pytest -q tests/test_scenarios.py` from `backend/`.
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md): intended layering
 - [docs/stitch-integration.md](docs/stitch-integration.md) and [design/stitch/HANDOFF.md](design/stitch/HANDOFF.md): optional Stitch MCP, key safety, manual export workflow
 - [docs/setup/local-machine.md](docs/setup/local-machine.md): machine audit
 - [docs/rl_contract.md](docs/rl_contract.md), [docs/research-protocol.md](docs/research-protocol.md): environment contract and experiment protocol
+- [docs/scenarios.md](docs/scenarios.md): scenario fixtures, seed splits, traffic shapes
 - [docs/task_log.md](docs/task_log.md), [docs/codebase_audit.md](docs/codebase_audit.md)

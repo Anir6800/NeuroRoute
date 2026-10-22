@@ -172,3 +172,9 @@
 - Env: Discrete(K) over S03 candidates (masked), fixed Box(0,1) observation (37 values on the base scenario), reward = -w_delay*delay - w_loss*loss - w_churn*route_change (- w_invalid*invalid), all weights from EnvConfig. No-route terminates with the S03 penalty scaled by (w_delay + w_loss); scenario end truncates.
 - Tests: `test_routing_env.py` 61 passed + 1 skipped on `.venv` (3.15), 62 passed on `.venv-rl` (3.13, includes SB3 check_env and a short MaskablePPO run). Includes gymnasium check_env on 10 configurations and 10,000 random masked actions with 0 invalid paths (each independently re-validated).
 - Mutation checks: 6 of 6 effective mutations caught (one first mutation was a no-op and was replaced).
+
+## NR-D3-S05 - Build reproducible scenario fixtures (2026-10-22)
+- Added six fixtures + `suite.json` in `experiments/configs/`, `backend/research/scenarios/suite.py`, `backend/tests/test_scenarios.py`, `docs/scenarios.md`; extended the scenario schema with an optional `Flow.shape` (diurnal, heavy-tailed on/off) and `traffic.shape_factors`.
+- Seeds fixed up front: train 0-99, validation 100-109, test 1000-1029 (disjoint, validated). Fixture hashes pinned in `suite.json`. `shift_test_only` is refused outside the test split.
+- Tests: `test_scenarios.py` 69 passed + 2 skipped (shift x train/validation, intentionally not applicable); whole backend 467 passed, 3 skipped on `.venv` (3.15); `.venv-rl` (3.13) 446 passed, 2 skipped (API tests excluded: no fastapi/jwt there); root 87 passed; ruff clean. Determinism: every scenario x split gives identical simulate()+baseline digests on repeated runs and across processes with different PYTHONHASHSEED.
+- Mutation checks: 11 mutations over traffic/suite/models; 2 survived the first suite (start-off rule, burst-stream independence), tests added, all 11 now caught.

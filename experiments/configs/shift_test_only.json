@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "name": "shift_test_only",
+  "seed": 1000,
+  "duration_s": 60.0,
+  "traffic": {
+    "kind": "poisson",
+    "packet_size_bytes": 1000
+  },
+  "nodes": [
+    {
+      "id": "a",
+      "kind": "host"
+    },
+    {
+      "id": "r1",
+      "kind": "router"
+    },
+    {
+      "id": "r2",
+      "kind": "router"
+    },
+    {
+      "id": "b",
+      "kind": "host"
+    }
+  ],
+  "links": [
+    {
+      "id": "a-r1",
+      "source": "a",
+      "target": "r1",
+      "capacity_mbps": 100.0,
+      "prop_delay_ms": 1.0,
+      "buffer_pkts": 100
+    },
+    {
+      "id": "a-r2",
+      "source": "a",
+      "target": "r2",
+      "capacity_mbps": 100.0,
+      "prop_delay_ms": 2.0,
+      "buffer_pkts": 100
+    },
+    {
+      "id": "r1-b",
+      "source": "r1",
+      "target": "b",
+      "capacity_mbps": 30.0,
+      "prop_delay_ms": 3.0,
+      "buffer_pkts": 50
+    },
+    {
+      "id": "r2-b",
+      "source": "r2",
+      "target": "b",
+      "capacity_mbps": 80.0,
+      "prop_delay_ms": 1.0,
+      "buffer_pkts": 50,
+      "weight": 3.0
+    }
+  ],
+  "flows": [
+    {
+      "id": "f1",
+      "source": "a",
+      "target": "b",
+      "demand_mbps": 25.0
+    },
+    {
+      "id": "f2",
+      "source": "a",
+      "target": "b",
+      "demand_mbps": 20.0,
+      "shape": {
+        "kind": "onoff",
+        "alpha": 1.2,
+        "mean_on_s": 4.0,
+        "mean_off_s": 6.0
+      }
+    }
+  ],
+  "failures": [
+    {
+      "time_s": 35.0,
+      "link_id": "a-r2",
+      "action": "down"
+    },
+    {
+      "time_s": 45.0,
+      "link_id": "a-r2",
+      "action": "up"
+    }
+  ]
+}

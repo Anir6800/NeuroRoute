@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "seed_ranges": {
+    "train": [
+      0,
+      99
+    ],
+    "validation": [
+      100,
+      109
+    ],
+    "test": [
+      1000,
+      1029
+    ]
+  },
+  "note": "Seed ranges are inclusive and fixed before any training. config_hash pins each scenario file; editing a fixture invalidates the suite.",
+  "scenarios": [
+    {
+      "name": "normal",
+      "file": "normal.json",
+      "family": "steady load",
+      "role": "standard",
+      "splits": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "config_hash": "f34db1c4c83d83c38f52289e979e410507bf15cec61670478267155b26285486"
+    },
+    {
+      "name": "diurnal_ramp",
+      "file": "diurnal_ramp.json",
+      "family": "diurnal ramp",
+      "role": "standard",
+      "splits": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "config_hash": "880e3fb274ffb3355f7ce6544283951a368c5b83193608f89393f69ea6358795"
+    },
+    {
+      "name": "flash_crowd",
+      "file": "flash_crowd.json",
+      "family": "flash crowd",
+      "role": "standard",
+      "splits": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "config_hash": "6970b5b736d799897df369cd6e23d7ed263841c9a2919f42b4fb925ba550e26a"
+    },
+    {
+      "name": "link_down",
+      "file": "link_down.json",
+      "family": "single link failure",
+      "role": "standard",
+      "splits": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "config_hash": "245ee54a3717d89f43b2604f2dba3b6cb2a0e4e4c8d9965b5dbaa34d52e195fd"
+    },
+    {
+      "name": "congested",
+      "file": "congested.json",
+      "family": "congestion hotspot",
+      "role": "standard",
+      "splits": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "config_hash": "9cb675f10912b9f3f8ce54eb6281af790519c48f98cc4e696c1e61620c7fd29f"
+    },
+    {
+      "name": "shift_test_only",
+      "file": "shift_test_only.json",
+      "family": "distribution shift",
+      "role": "distribution_shift",
+      "splits": [
+        "test"
+      ],
+      "config_hash": "a7387c68e484f11ed57e982a15ee45c04db5f492d23106b96d4864ae5144acd0"
+    }
+  ]
+}

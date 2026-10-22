@@ -28,7 +28,7 @@ For each step `k` (start time `t = k * step_s`):
    If several links join the same ordered pair of nodes, only the lowest `(weight, id)` link is used. Routes are recomputed
    only when the set of failed links changes.
 3. **Offered load.** `cbr`: constant `demand_mbps`. `poisson`: packet count per step ~ Poisson(`demand_pps * step_s`); rate = count x
-   packet bits / `step_s`. A flow starts at the first step with `t >= start_s`.
+   packet bits / `step_s`. A flow starts at the first step with `t >= start_s`. A flow may carry an optional `shape` (diurnal or heavy-tailed on/off) that multiplies its demand per step before the draw; see docs/scenarios.md.
 4. **Per-link queue: M/M/1/K.** Service rate `mu = capacity_bps / packet_bits` (packets/s); arrival rate `lambda` (packets/s, after
    upstream loss); `rho = lambda / mu`; `K = buffer_pkts` is the **system capacity including the packet in service**.
    - **Loss** is the M/M/1/K blocking probability `P_K = (1 - rho) rho^K / (1 - rho^(K+1))` (`1/(K+1)` at `rho = 1`), evaluated with

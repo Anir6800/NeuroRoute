@@ -15,11 +15,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from research.simulation.models import Scenario
+from research.simulation.models import Diurnal, OnOff, Scenario
 
 MAX_STEPS = 200_000
+MAX_BURSTS = 1_000_000  # safety cap on generated on/off segments
 
-__all__ = ["MAX_STEPS", "OfferedLoad", "flow_seed", "offered_load", "step_count"]
+__all__ = ["MAX_STEPS", "OfferedLoad", "flow_seed", "offered_load", "shape_factors", "step_count"]
 
 
 def step_count(duration_s: float, step_s: float) -> int:
@@ -41,6 +42,35 @@ def flow_seed(seed: int, flow_id: str) -> np.random.SeedSequence:
     return np.random.SeedSequence([seed, zlib.crc32(flow_id.encode("utf-8"))])
 
 
+def _burst_seed(seed: int, flow_id: str) -> np.random.SeedSequence:
+    """Stream for burst timing, independent of the Poisson stream so adding a shape never moves existing draws."""
+    return np.random.SeedSequence([seed, zlib.crc32(flow_id.encode("utf-8")), 1])
+
+
+def shape_factors(shape: Diurnal | OnOff, times: np.ndarray, step_s: float, seed: int, flow_id: str) -> np.ndarray:
+    """Per-step demand multiplier (>= 0). diurnal: value at the step midpoint. onoff: fraction of the step spent 'on'."""
+    if isinstance(shape, Diurnal):
+        phase = 2 * math.pi * (times + step_s / 2) / shape.period_s
+        return shape.min_factor + (shape.max_factor - shape.min_factor) * (1 - np.cos(phase)) / 2
+    horizon = float(times[-1]) + step_s
+    xm_on = shape.mean_on_s * (shape.alpha - 1) / shape.alpha  # Pareto scale giving the requested mean
+    xm_off = shape.mean_off_s * (shape.alpha - 1) / shape.alpha
+    rng = np.random.default_rng(_burst_seed(seed, flow_id))
+    edges, cum_on, t, on_total, on = [0.0], [0.0], 0.0, 0.0, False  # flows start in an off period
+    while t < horizon:
+        if len(edges) > MAX_BURSTS:
+            raise ValueError(f"flow {flow_id}: more than {MAX_BURSTS} bursts; increase mean_on_s / mean_off_s")
+        d = (xm_on if on else xm_off) * (1.0 + rng.pareto(shape.alpha))
+        t += d
+        on_total += d if on else 0.0
+        edges.append(t)
+        cum_on.append(on_total)
+        on = not on
+    boundaries = np.append(times, horizon)
+    cum = np.interp(boundaries, edges, cum_on)  # exact: on-time accrues linearly inside an on segment
+    return np.clip(np.diff(cum) / step_s, 0.0, 1.0)
+
+
 @dataclass(frozen=True, eq=False)
 class OfferedLoad:
     times_s: np.ndarray  # (n_steps,) start time of each step
@@ -54,6 +84,7 @@ def offered_load(scenario: Scenario, step_s: float = 1.0, seed: int | None = Non
 
     cbr:     constant `demand_mbps`.
     poisson: packet count per step ~ Poisson(demand_pps * step_s); rate = count * packet_bits / step_s.
+    A flow with a `shape` has its demand multiplied per step by `shape_factors` (see there) before the draw.
              Draws are made for every step (then masked by `start_s`) so changing `start_s` does not
              shift the random stream.
     A flow is active from the first step whose start time is >= `start_s` (quantised to step boundaries).
@@ -68,12 +99,16 @@ def offered_load(scenario: Scenario, step_s: float = 1.0, seed: int | None = Non
     active = np.zeros((n, len(flows)), dtype=np.bool_)
     for j, flow in enumerate(flows):
         base_bps = flow.demand_mbps * 1e6
+        factor = None if flow.shape is None else shape_factors(flow.shape, times, step_s, seed, flow.id)
         if scenario.traffic.kind == "poisson":
             rng = np.random.default_rng(flow_seed(seed, flow.id))
-            counts = rng.poisson(base_bps * step_s / pkt_bits, size=n)
+            lam = base_bps * step_s / pkt_bits
+            counts = rng.poisson(lam if factor is None else lam * factor, size=n)
             series = counts * pkt_bits / step_s / 1e6
         else:
             series = np.full(n, flow.demand_mbps, dtype=np.float64)
+            if factor is not None:
+                series = series * factor
         started = times >= flow.start_s
         rates[:, j] = np.where(started, series, 0.0)
         active[:, j] = started

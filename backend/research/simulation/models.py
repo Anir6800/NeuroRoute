@@ -33,12 +33,44 @@ class Link(_Strict):
     weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
 
 
+class Diurnal(_Strict):
+    """Smooth day/night cycle: factor = min + (max - min) * (1 - cos(2*pi*t/period)) / 2, so it starts at `min`."""
+
+    kind: Literal["diurnal"] = "diurnal"
+    period_s: float = Field(gt=0, allow_inf_nan=False)
+    min_factor: float = Field(ge=0, le=20, allow_inf_nan=False)
+    max_factor: float = Field(ge=0, le=20, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Diurnal:
+        if self.max_factor < self.min_factor:
+            raise ValueError("max_factor must be >= min_factor")
+        return self
+
+
+class OnOff(_Strict):
+    """Flash-crowd bursts: alternating on (full demand) and off (silent) periods with Pareto (heavy-tailed) durations.
+
+    `alpha` is the tail index (> 1 so the mean exists; the variance is infinite for alpha <= 2). The scale is chosen so the
+    mean on/off duration equals `mean_on_s` / `mean_off_s`. The flow starts in an off period.
+    """
+
+    kind: Literal["onoff"] = "onoff"
+    alpha: float = Field(gt=1, le=10, allow_inf_nan=False)
+    mean_on_s: float = Field(gt=0, allow_inf_nan=False)
+    mean_off_s: float = Field(gt=0, allow_inf_nan=False)
+
+
+Shape = Annotated[Diurnal | OnOff, Field(discriminator="kind")]
+
+
 class Flow(_Strict):
     id: Ident
     source: Ident
     target: Ident
     demand_mbps: float = Field(gt=0, allow_inf_nan=False)
     start_s: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    shape: Shape | None = None  # time variation of the demand; None = constant (the original behaviour)
 
 
 class TrafficModel(_Strict):
@@ -94,6 +126,9 @@ class Scenario(_Strict):
     def canonical_json(self) -> str:
         """Order-insensitive for nodes/links/flows/failures; sorted keys; no whitespace."""
         d = self.model_dump(mode="json")
+        for flow in d["flows"]:
+            if flow["shape"] is None:
+                del flow["shape"]  # keeps the hash of every scenario that predates `shape`
         for key in ("nodes", "links", "flows"):
             d[key] = sorted(d[key], key=lambda x: x["id"])
         d["failures"] = sorted(d["failures"], key=lambda x: (x["time_s"], x["link_id"], x["action"]))

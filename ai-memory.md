@@ -5,7 +5,7 @@ Never log secrets here.
 
 ## Current State
 - Repo root: `C:\personal project\college project\cn sem-5\personal\NeuroRoute`
-- Git repo on `main`, HEAD 2c61240 (NR-D3-S03 commit) + NR-D3-S04 commit on top; tree clean as of NR-D3-S04 start (earlier: ffed6f1 S02, d928d4b S01). REMOTE: origin = https://github.com/Anir6800/NeuroRoute.git was added by the user outside my sessions; origin/main is at 667a184 and local main is 8 commits ahead. I do NOT push unless the user asks (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
+- Git repo on `main`, HEAD = NR-D3-S05 commit on top of 942def8 (S04) and 2c61240 (S03); tree clean as of NR-D3-S04 start (earlier: ffed6f1 S02, d928d4b S01). REMOTE: origin = https://github.com/Anir6800/NeuroRoute.git was added by the user outside my sessions; origin/main is at 667a184 and local main is 8 commits ahead. I do NOT push unless the user asks (reconciled: earlier HEAD 2f50fdf / "not a git repo" notes were stale).
 - Backend: backend/app/{main.py,core/config.py} FastAPI /health on 127.0.0.1:8001 (S04). Existing: .gitignore, ai-memory.md, docs/{task_log,codebase_audit}.md, docs/setup/local-machine.md. README.md and docs/architecture.md added in S02.
 - Python: `.venv` 3.15.0 (API/sim), `.venv-rl` 3.13.7 (torch/sb3). Prompts still say 3.11; user overrode that.
 - One-command start: scripts/dev-neuro.sh / check-neuro.sh (S08); no services left running. Auth emulator + GET /me (S07; demo-neuroroute, 127.0.0.1:9099). Scenario schema v1.0 in backend/research/simulation/models.py (S06). Frontend: frontend/ Vite+React19+TS, router shell, /api proxy (S05). Pending tasks: next task after NR-D2-S08 (planner moved to Day 2; D1-S09 never issued); decide on Mininet in WSL.
@@ -276,3 +276,18 @@ Never log secrets here.
 - Mutation checks: churn sign, hard-coded churn weight, loss weight, unpenalised invalid, utilisation cap, truncated->terminated: all caught; source restored.
 - Fixes found in my own work: one test expectation (a cut at the last step terminates from the step before, with 1 step of penalty); ruff findings.
 - Risks: placeholder reward weights; single controlled flow; stale-mask substitution semantics.
+
+### NR-D3-S05 - Build reproducible scenario fixtures
+- Status: DONE (committed after verification; not pushed)
+- Started: 2026-10-22 | Model tier: Sonnet 5.5 | Branch: main (HEAD 942def8, tree clean). Not pushing.
+- Scope: experiments/configs/{normal,congested,link_down}.json (required) plus diurnal_ramp, flash_crowd, shift_test_only; experiments/configs/suite.json (seed ranges + roles + pinned scenario hashes); backend/research/scenarios/suite.py; backend/tests/test_scenarios.py; optional Flow.shape in the scenario schema (backward compatible); docs.
+- Design decisions made up front:
+  * Time-varying load needs the schema to express it. Add an OPTIONAL per-flow `shape` (diurnal | onoff, default none). canonical_json drops a null shape so every existing scenario keeps its config_hash and existing golden digests must stay unchanged (checked by the existing tests).
+  * onoff = heavy-tailed (Pareto, alpha > 1) on/off durations from a separate per-flow seed stream; step rate = demand x fraction of the step spent on. diurnal = raised-cosine between min and max factor.
+  * Seeds: train 0-99, validation 100-109, test 1000-1029 (inclusive), disjoint, validated, in suite.json. The shift scenario is test-only and the loader refuses it for train/validation. It keeps the same node/link count so a trained policy's observation shape still applies; it shifts capacities, delays, demand and burstiness.
+  * Scenario hashes are pinned in suite.json so editing a fixture after the suite is fixed fails a test.
+- Planned paths: backend/research/simulation/{models,traffic}.py, backend/research/scenarios/{__init__,suite}.py, experiments/configs/*.json, backend/tests/test_scenarios.py, docs/scenarios.md, README.md, docs/task_log.md, docs/codebase_audit.md, ai-memory.md
+- Baseline evidence: backend 398 passed + 1 skipped (3.15), root 87 passed (NR-D3-S04 close). Dev stack not running.
+- Result (2026-10-22): `.venv` backend pytest: 467 passed, 3 skipped; `.venv-rl` (API tests excluded, no fastapi/jwt): 446 passed, 2 skipped; root tests 87 passed; ruff clean; git diff --check clean (CRLF warnings only). test_scenarios.py: 69 passed, 2 skipped (not-applicable shift splits). Frontend untouched, not re-run. Determinism verified per scenario x split and across processes with different PYTHONHASHSEED. Regimes confirmed with the static baseline (normal peak load 0.73; hotspot 1.65 with the other path idle; link_down reroutes at 20 s and back at 45 s).
+- Mutation checks: 11 mutations; first run left 2 alive (start-off rule, burst stream independence); tests added; all caught; sources restored.
+- Risks: schema version not bumped for the additive `shape`; fixture parameters are my choices, not calibrated; one topology only; shift is a dynamics shift on the same graph.
