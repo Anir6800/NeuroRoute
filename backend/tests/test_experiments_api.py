@@ -1,4 +1,5 @@
 """Experiment-job HTTP lifecycle tests; the child process is faked, never trained."""
+import json
 import time
 from pathlib import Path
 
@@ -97,6 +98,35 @@ def test_timeout_terminates_the_child(client) -> None:
         "elapsed_s": 0, "completed_runs": 0, "total_runs": 3,
     }
     assert popen.processes[0].terminated
+
+
+def test_history_and_details_survive_an_api_restart(client) -> None:
+    http, _ = client
+    jobs = app.dependency_overrides[routes.get_jobs]()
+    manifest_path = jobs.settings.training_jobs_dir / "durable-run" / "models" / "training-manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text(json.dumps({
+        "command": "train", "scenario": {"name": "normal"}, "scenario_config_hash": "scenario-hash",
+        "env_config": {"candidate_paths": 4}, "env_config_hash": "env-hash", "seeds": [3, 4],
+        "runs": [
+            {"run_id": "one", "seed": 3, "episodes": 2, "timesteps": 8, "wall_clock_s": 1.25},
+            {"run_id": "two", "seed": 4, "episodes": 2, "timesteps": 8, "wall_clock_s": 1.5},
+        ],
+    }), encoding="utf-8")
+    restarted = ExperimentJobs(jobs.settings, popen=Popen())
+    app.dependency_overrides[routes.get_jobs] = lambda: restarted
+
+    history = http.get("/experiments", headers=auth())
+    assert history.status_code == 200
+    assert history.json()[0] | {"created_at": 0, "elapsed_s": 0} == {
+        "job_id": "durable-run", "status": "done", "error": None, "created_at": 0, "scenario": "normal",
+        "seed_count": 2, "completed_runs": 2, "total_runs": 2, "total_timesteps": 16, "wall_clock_s": 2.75,
+        "elapsed_s": 0,
+    }
+    details = http.get("/experiments/durable-run/details", headers=auth())
+    assert details.status_code == 200
+    assert details.json()["metadata"]["scenario_config_hash"] == "scenario-hash"
+    assert details.json()["runs"][1]["seed"] == 4
 
 
 def test_websocket_streams_heartbeats_and_progress_until_done(client) -> None:

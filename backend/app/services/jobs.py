@@ -1,6 +1,7 @@
 """Bounded local subprocess jobs for the CPU-only training harness."""
 from __future__ import annotations
 
+import json
 import sqlite3
 import subprocess
 import time
@@ -29,6 +30,7 @@ class ExperimentJob:
     process: subprocess.Popen[bytes] | None
     command: tuple[str, ...]
     job_dir: Path
+    scenario: str
     total_runs: int
     error: str | None = None
 
@@ -58,7 +60,7 @@ class ExperimentJobs:
             "--threads", "1", "--env-config", str(config_path), "--output-dir", str(job_dir / "models"),
             "--results-dir", str(job_dir / "results"), "--mlflow-dir", str(job_dir / "mlflow"),
         )
-        job = ExperimentJob(job_id, "queued", time.time(), None, command, job_dir, seed_count)
+        job = ExperimentJob(job_id, "queued", time.time(), None, command, job_dir, scenario, seed_count)
         self._jobs[job_id] = job
         try:
             job.process = self._popen(command, cwd=ROOT / "backend", stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -98,6 +100,69 @@ class ExperimentJobs:
             "elapsed_s": max(0.0, time.time() - job.created_at), "completed_runs": completed_runs,
             "total_runs": job.total_runs,
         }
+
+    def history(self) -> list[dict[str, object]]:
+        """Completed manifests survive restarts; the active job remains an in-memory local concern."""
+        entries = {entry["job_id"]: entry for entry in self._persisted_history()}
+        for job in self._jobs.values():
+            progress = self.progress(job.id)
+            assert progress is not None
+            entries[job.id] = {
+                **progress, "created_at": job.created_at, "scenario": job.scenario,
+                "seed_count": job.total_runs, "total_timesteps": 0, "wall_clock_s": 0.0,
+            }
+        return sorted(entries.values(), key=lambda entry: float(entry["created_at"]), reverse=True)
+
+    def detail(self, job_id: str) -> dict[str, object] | None:
+        for entry in self.history():
+            if entry["job_id"] != job_id:
+                continue
+            manifest = self._manifest(self.settings.training_jobs_dir / job_id)
+            if manifest is None:
+                return {**entry, "metadata": {}, "runs": []}
+            runs = manifest.get("runs")
+            if not isinstance(runs, list):
+                runs = []
+            return {
+                **entry,
+                "metadata": {key: manifest.get(key) for key in ("scenario_config_hash", "env_config_hash", "seeds", "env_config")},
+                "runs": [run for run in runs if isinstance(run, dict)],
+            }
+        return None
+
+    def _persisted_history(self) -> list[dict[str, object]]:
+        if not self.settings.training_jobs_dir.is_dir():
+            return []
+        entries = []
+        for job_dir in self.settings.training_jobs_dir.iterdir():
+            manifest = self._manifest(job_dir)
+            if manifest is None:
+                continue
+            runs, seeds = manifest.get("runs"), manifest.get("seeds")
+            if not isinstance(runs, list) or not isinstance(seeds, list):
+                continue
+            scenario = manifest.get("scenario")
+            name = scenario.get("name") if isinstance(scenario, dict) else None
+            if not isinstance(name, str):
+                continue
+            valid_runs = [run for run in runs if isinstance(run, dict)]
+            entries.append({
+                "job_id": job_dir.name, "status": "done", "error": None, "created_at": job_dir.stat().st_mtime,
+                "scenario": name, "seed_count": len(seeds), "completed_runs": len(valid_runs), "total_runs": len(seeds),
+                "total_timesteps": sum(run.get("timesteps", 0) for run in valid_runs if isinstance(run.get("timesteps"), int)),
+                "wall_clock_s": sum(float(run.get("wall_clock_s", 0)) for run in valid_runs if isinstance(run.get("wall_clock_s"), (int, float))),
+                "elapsed_s": 0.0,
+            })
+        return entries
+
+    @staticmethod
+    def _manifest(job_dir: Path) -> dict[str, object] | None:
+        path = job_dir / "models" / "training-manifest.json"
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        return value if isinstance(value, dict) and value.get("command") == "train" else None
 
     def _validate(self, scenario: str, seed_count: int, timesteps: int, max_episodes: int, path_count: int) -> None:
         if scenario not in load_suite().names("train"):

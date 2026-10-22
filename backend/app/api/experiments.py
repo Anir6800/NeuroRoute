@@ -35,6 +35,14 @@ class JobOut(_Strict):
     total_runs: int
 
 
+class ExperimentSummary(JobOut):
+    created_at: float
+    scenario: str
+    seed_count: int
+    total_timesteps: int
+    wall_clock_s: float
+
+
 @lru_cache
 def _default_jobs() -> ExperimentJobs:
     return ExperimentJobs(get_settings())
@@ -53,6 +61,10 @@ def _out(progress: dict[str, object]) -> JobOut:
     return JobOut.model_validate({key: progress[key] for key in JobOut.model_fields})
 
 
+def _summary(progress: dict[str, object]) -> ExperimentSummary:
+    return ExperimentSummary.model_validate({key: progress[key] for key in ExperimentSummary.model_fields})
+
+
 @router.post("/train", status_code=status.HTTP_202_ACCEPTED)
 def start_training(body: TrainingRequest, _: User, jobs: Jobs) -> JobOut:
     try:
@@ -62,6 +74,19 @@ def start_training(body: TrainingRequest, _: User, jobs: Jobs) -> JobOut:
         return _out(progress)
     except JobLimitError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from None
+
+
+@router.get("")
+def list_experiments(_: User, jobs: Jobs) -> list[ExperimentSummary]:
+    return [_summary(entry) for entry in jobs.history()]
+
+
+@router.get("/{job_id}/details")
+def experiment_detail(job_id: str, _: User, jobs: Jobs) -> dict[str, object]:
+    detail = jobs.detail(job_id)
+    if detail is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such experiment")
+    return detail
 
 
 @router.get("/{job_id}")

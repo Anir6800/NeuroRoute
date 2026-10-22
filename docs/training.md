@@ -46,6 +46,13 @@ timesteps, 1--1,000 episodes, and 1--16 candidate paths; one local job can run f
 its derived immutable environment config and artifacts under `runs/jobs/<job_id>/`; source experiment configs are unchanged.
 Override these localhost-only budgets with `NEUROROUTE_MAX_TRAINING_*` or `NEUROROUTE_TRAINING_TIMEOUT_S` when needed.
 
+## Experiment history
+
+`GET /experiments` reads completed `runs/jobs/<job_id>/models/training-manifest.json` files, so completed history remains
+available after the API process restarts. `GET /experiments/{job_id}/details` includes immutable scenario/environment hashes,
+the selected seeds, and per-seed episode, timestep and wall-clock metrics. The authenticated `/experiments` UI displays that
+history and exports one selected detail record as JSON; all values remain simulated local-training data.
+
 ### Progress events
 
 Connect to `WS /events/experiments/{job_id}` and send `{"token": "<Firebase emulator ID token>"}` as the first message.

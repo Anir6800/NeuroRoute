@@ -543,6 +543,17 @@
 .training-progress progress {
   width: 100%;
 }
+.run-table-wrap { overflow-x: auto; }
+.run-table { width: 100%; border-collapse: collapse; font-size: var(--type-body-sm-size); }
+.run-table th, .run-table td { padding: var(--space-sm); border-bottom: 1px solid var(--color-border); text-align: left; white-space: nowrap; }
+.run-table tbody tr[aria-current='true'] { background: var(--color-hover); }
+.run-table__select { padding: 0; border: 0; color: var(--color-accent-text); background: transparent; font: inherit; text-decoration: underline; cursor: pointer; }
+.experiment-detail { margin-top: var(--space-lg); }
+.experiment-detail__header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-md); align-items: center; }
+.experiment-detail__metadata { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-sm) var(--space-lg); }
+.experiment-detail__metadata div { display: grid; gap: var(--space-xs); }
+.experiment-detail__metadata dt { color: var(--color-muted); font-size: var(--type-body-sm-size); }
+.experiment-detail__metadata dd { margin: 0; overflow-wrap: anywhere; font-family: var(--font-mono); }
 @media (max-width: 800px) {
   .training-grid {
     grid-template-columns: minmax(0, 1fr);

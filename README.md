@@ -51,6 +51,10 @@ CLI as a child process, accepts one job at a time, and keeps its generated data 
 subscribe to `/events/experiments/{job_id}` for heartbeats and completed-seed progress; it reconnects and polls the HTTP
 status endpoint while the socket is unavailable.
 
+`GET /experiments` lists durable completed manifests (plus any active local job) and
+`GET /experiments/{job_id}/details` returns its immutable hashes and per-seed metrics. The `/experiments` screen uses these
+endpoints after an API restart and can export a selected record as local JSON.
+
 The `/training` screen launches the bounded `normal` scenario directly: 3--5 seeds, 1--1,000 episodes, 1--16 candidate
 paths and 1--100,000 timesteps per seed. Controls lock while the job runs; every displayed value is visibly labelled as
 simulated training data from the local tracker.

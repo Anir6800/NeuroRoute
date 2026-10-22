@@ -106,8 +106,8 @@ describe('navigation smoke tests', () => {
   })
 })
 
-// Topology Studio and Training Lab are working screens; the others remain placeholders.
-const SKELETONS = SCREENS.filter((s) => !['/topology', '/training'].includes(s.path))
+// Topology Studio, Training Lab and Experiments are working screens; the others remain placeholders.
+const SKELETONS = SCREENS.filter((s) => !['/topology', '/training', '/experiments'].includes(s.path))
 
 describe('screen skeletons are honest', () => {
   it.each(SKELETONS)('$title: empty by default, one disabled action with a visible reason', async ({ path }) => {

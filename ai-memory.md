@@ -376,3 +376,9 @@ Never log secrets here.
 - Real browser evidence: local stack 5/5 healthy; emulator sign-in; UI launch with seeds=3, episodes=1, K=4, timesteps=8; live card showed `Updates: websocket`; terminal `Completed`, 3 of 3, 14.2 s; no console errors. Browser and stack closed, ports free.
 - Final checks: backend 597 passed, 6 skipped in 39.64 s and Ruff clean; root 87 passed; frontend 127 passed, TypeScript, Vite build and oxlint clean.
 - Risks: the page only exposes the fixed `normal` training scenario and one CPU thread, matching the bounded MVP API. Active job state is browser-session only; refreshing the page does not rediscover a still-running in-memory API job.
+
+### NR-D4-S07 - Implement experiments list and details
+- Status: DONE (2026-10-22; committed after verification). Scope: read-only durable experiment API, Experiments history/details UI, local JSON export, focused regression tests and documentation. No new tracker format, cloud storage or comparison UI.
+- Result: completed jobs are reconstructed from their immutable ignored training manifests after an API restart; the UI shows scenario/status, seed completion, step and wall-clock summaries, config hashes, seeds and per-seed metrics.
+- Evidence: restart regression test rebuilds the job service and reads history/details; real Chrome signed in, rendered four previously completed records, opened metadata/per-seed metrics and downloaded the selected JSON with no console errors. Final backend suite: 598 passed, 6 skipped in 51.39 s and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, Vite build and oxlint clean.
+- Risks: active/failed/cancelled jobs without a completed manifest are intentionally not durable; per-episode metric arrays remain in the local tracker rather than being sent to the browser.

@@ -1,5 +1,9 @@
 # Task log
 
+## NR-D4-S07 — Implement experiments list and details (2026-10-22)
+- Added authenticated manifest-backed experiment history/detail endpoints and an Experiments UI with run status, seed/timestep/wall-clock summaries, immutable metadata, per-seed metrics, and local JSON export. Completed records are reconstructed from ignored `runs/jobs/<id>/models/training-manifest.json`, so they persist across API restarts; active jobs remain in-memory.
+- Evidence: focused API test creates a manifest, rebuilds the job service to model an API restart, then reads history and details. Real Chrome signed in against the local stack and rendered four pre-existing completed runs, opened their hashes/per-seed table, and downloaded `neuroroute-02d5cfb18c964e18ac43942d3c6f12c0.json` with no console errors. Final checks: backend 598 passed, 6 skipped and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, production build and oxlint clean.
+
 ## NR-D4-S06 — Implement Training Lab controls (2026-10-22)
 - Replaced the Training placeholder with a controlled form for seed count, episode cap, candidate paths and timestep budget; launches the authenticated local job API, locks during active work, and renders source-labelled simulated tracker progress through the existing event hook. Added the missing API-runtime `websockets` dependency found by the real browser check.
 - Focused tests validate every bound and prove the exact POST payload reaches a terminal, source-labelled UI. Real Chrome against the full local stack signed in, launched seeds=3/episodes=1/K=4/timesteps=8, showed `Updates: websocket`, then completed 3/3 in 14.2 s with no console errors; stack stopped and ports freed. Final checks: backend 597 passed, 6 skipped and Ruff clean; root 87 passed; frontend 127 passed, TypeScript, production build and oxlint clean.
