@@ -1,5 +1,14 @@
 # Task log
 
+## NR-D5-S01 — Build reproducible comparative evaluator (2026-10-23)
+- Added `research.evaluation.compare` CLI for matched held-out test seeds across Dijkstra, ECMP, congestion-aware, MaskablePPO, random-valid and oracle; each record includes scenario/config hashes and the shared traffic seed.
+- Added aligned delay mean/p50/p95/p99, loss, throughput, route churn/minute and link-failure recovery metrics, with JSON per-policy records and aggregates. Output is explicitly simulated.
+- Usage: `cd backend; ..\\.venv\\Scripts\\python -m research.evaluation.compare --checkpoint <checkpoint> --output <comparison.json>`.
+
+## NM-D4-S06 — Implement incident UI from live API (2026-10-23)
+- Added authenticated local trigger/list/detail incident endpoints plus Incidents and Incident Detail screens. The manual trigger creates a clearly labelled verification incident with explicit evidence, timeline, and diagnosis; no client-side incident data is fabricated.
+- Evidence: focused API and UI tests cover trigger → list → detail; full suite/build and real-browser evidence is recorded with task completion. Records are intentionally process-local in this localhost MVP.
+
 ## NR-D4-S08 — Create no-LLM fallback research narration (2026-10-22)
 - Added a pure deterministic summary service and run-detail UI. It reports only paired finite recorded baseline deltas, never labels them as improvements, and always lists simulation and uncertainty limitations. Current training manifests have no paired outcome metrics, so the visible fallback explicitly makes no comparative claim.
 - Evidence: exact-delta and missing-data unit tests plus API/UI coverage. Real Chrome signed in against the local stack, opened a durable run, and rendered the simulated/no-baseline/no-interval limitations with no console errors. Final checks: backend 600 passed, 6 skipped and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, production build and oxlint clean.
