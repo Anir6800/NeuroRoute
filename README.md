@@ -51,6 +51,10 @@ CLI as a child process, accepts one job at a time, and keeps its generated data 
 subscribe to `/events/experiments/{job_id}` for heartbeats and completed-seed progress; it reconnects and polls the HTTP
 status endpoint while the socket is unavailable.
 
+The local incident API exposes `POST /incidents/trigger`, `GET /incidents`, and `GET /incidents/{id}` for explicit
+evidence-backed test incidents. The `/incidents` screen triggers a labelled manual verification record and opens its live
+detail view; records are process-local for this MVP.
+
 `GET /experiments` lists durable completed manifests (plus any active local job) and
 `GET /experiments/{job_id}/details` returns its immutable hashes and per-seed metrics. The `/experiments` screen uses these
 endpoints after an API restart and can export a selected record as local JSON.

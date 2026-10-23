@@ -6,6 +6,7 @@ import { routes } from './app/router'
 import { stubReactFlowEnvironment } from './features/topology/testing'
 import { Comparison } from './pages/Comparison'
 import { Experiments } from './pages/Experiments'
+import { Incidents } from './pages/Incidents'
 import { Overview } from './pages/Overview'
 import { Topology } from './pages/Topology'
 import { Training } from './pages/Training'
@@ -24,6 +25,7 @@ const SCREENS = [
   { Page: Topology, path: '/topology', title: 'Topology Studio' },
   { Page: Training, path: '/training', title: 'Training Lab' },
   { Page: Experiments, path: '/experiments', title: 'Experiments' },
+  { Page: Incidents, path: '/incidents', title: 'Incidents' },
   { Page: Comparison, path: '/comparison', title: 'Model Comparison' },
 ] as const
 
@@ -47,7 +49,7 @@ describe('routes and navigation config', () => {
   it('every sidebar item has a route and every MVP route has a sidebar item', () => {
     const children = routes[0].children ?? []
     const routePaths = children
-      .filter((r) => r.path !== 'login' && r.path !== '*')
+      .filter((r) => r.path !== 'login' && r.path !== '*' && !r.path?.includes(':'))
       .map((r) => (r.index ? '/' : `/${r.path}`))
     expect([...routePaths].sort()).toEqual(NAV_ITEMS.map((i) => i.path).sort())
     expect(NAV_ITEMS.map((i) => i.label)).toEqual(SCREENS.map((s) => s.title))
@@ -106,8 +108,8 @@ describe('navigation smoke tests', () => {
   })
 })
 
-// Topology Studio, Training Lab and Experiments are working screens; the others remain placeholders.
-const SKELETONS = SCREENS.filter((s) => !['/topology', '/training', '/experiments'].includes(s.path))
+// Topology Studio, Training Lab, Experiments and Incidents are working screens; the others remain placeholders.
+const SKELETONS = SCREENS.filter((s) => !['/topology', '/training', '/experiments', '/incidents'].includes(s.path))
 
 describe('screen skeletons are honest', () => {
   it.each(SKELETONS)('$title: empty by default, one disabled action with a visible reason', async ({ path }) => {

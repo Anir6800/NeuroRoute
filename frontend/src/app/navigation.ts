@@ -15,6 +15,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { path: '/topology', label: 'Topology Studio', short: 'Topology', icon: 'topology' },
   { path: '/training', label: 'Training Lab', short: 'Training', icon: 'training' },
   { path: '/experiments', label: 'Experiments', short: 'Experiments', icon: 'experiments' },
+  { path: '/incidents', label: 'Incidents', short: 'Incidents', icon: 'incidents' },
   { path: '/comparison', label: 'Model Comparison', short: 'Compare', icon: 'comparison' },
 ]
 
@@ -32,5 +33,6 @@ export function activeIndex(pathname: string): number {
 
 export function titleFor(pathname: string): string {
   const path = normalize(pathname)
+  if (path.startsWith('/incidents/')) return 'Incident detail'
   return NAV_ITEMS.find((i) => i.path === path)?.label ?? OTHER_TITLES[path] ?? 'Page not found'
 }

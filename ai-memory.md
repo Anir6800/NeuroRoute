@@ -388,3 +388,9 @@ Never log secrets here.
 - Result: paired finite outcome metrics are rendered as raw candidate/baseline values and deltas only. Missing comparisons, sample counts and confidence intervals show explicit limitations; current manifests therefore make no comparative claim.
 - Evidence: exact-delta/missing-data tests plus API/UI coverage. Real Chrome signed in, opened an existing durable run, and rendered the simulation, no-baseline and no-interval limitations with no console errors. Final backend suite: 600 passed, 6 skipped in 40.95 s and Ruff clean; root 87 passed; frontend 126 passed, TypeScript, Vite build and oxlint clean.
 - Risks: training manifests do not yet record comparable evaluation outcomes or confidence intervals, so production narration correctly has no observation sentence until that data exists.
+
+### NM-D4-S06 - Implement incident UI from live API
+- Status: IN PROGRESS (2026-10-23). Scope: authenticated local incident trigger/list/detail API, Incidents and Incident Detail pages, routing, tests and documentation. No external monitoring connector, auto-diagnosis or persistent alert store.
+- Result: the UI triggers an explicit manual verification incident, lists it from the live API, and opens its evidence, timeline and diagnosis with loading/error states.
+- Evidence so far: focused backend endpoint test and frontend trigger-to-detail/navigation tests pass; TypeScript and oxlint pass.
+- Risks: records are memory-only and reset when the backend restarts; this is a deliberate localhost-MVP limit rather than durable incident management.

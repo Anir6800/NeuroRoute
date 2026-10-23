@@ -557,6 +557,12 @@
 .run-summary { margin-block: var(--space-lg); }
 .run-summary h3, .run-summary h4 { margin-bottom: var(--space-sm); }
 .run-summary ul { display: grid; gap: var(--space-xs); margin: 0 0 var(--space-md); padding-left: var(--space-lg); }
+.incident-list { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
+.incident-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--space-md); align-items: center; padding-bottom: var(--space-sm); border-bottom: 1px solid var(--color-border); }
+.incident-list a, .incident-detail__back { color: var(--color-accent-text); text-decoration: underline; }
+.incident-list span, .incident-detail__meta { color: var(--color-muted); font-size: var(--type-body-sm-size); }
+.incident-detail__back { display: inline-block; margin-top: var(--space-md); }
+@media (max-width: 620px) { .incident-list li { grid-template-columns: 1fr; gap: var(--space-xs); } }
 @media (max-width: 800px) {
   .training-grid {
     grid-template-columns: minmax(0, 1fr);

@@ -3,6 +3,8 @@ import { AppShell } from '../components/layout/AppShell'
 import { LoadingState } from '../components/ui/States'
 import { Comparison } from '../pages/Comparison'
 import { Experiments } from '../pages/Experiments'
+import { IncidentDetail } from '../pages/IncidentDetail'
+import { Incidents } from '../pages/Incidents'
 import { NotFound } from '../pages/NotFound'
 import { Overview } from '../pages/Overview'
 import { Training } from '../pages/Training'
@@ -19,6 +21,8 @@ export const routes: RouteObject[] = [
       { path: 'topology', lazy: async () => ({ Component: (await import('../pages/Topology')).Topology }) },
       { path: 'training', element: <Training /> },
       { path: 'experiments', element: <Experiments /> },
+      { path: 'incidents', element: <Incidents /> },
+      { path: 'incidents/:incidentId', element: <IncidentDetail /> },
       { path: 'comparison', element: <Comparison /> },
       // Code-split: the sign-in page pulls in the Firebase SDK, which the other screens do not need.
       { path: 'login', lazy: async () => ({ Component: (await import('../pages/Login')).Login }) },

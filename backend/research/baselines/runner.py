@@ -65,21 +65,28 @@ def _main_path(decision: Decision) -> tuple[str, ...]:
     return min(decision, key=lambda wp: (-wp[1], wp[0]))[0]
 
 
-def run_policy(scenario: Scenario, policy: Policy, *, step_s: float = 1.0, seed: int | None = None) -> PolicyRun:
+def run_policy(scenario: Scenario, policy: Policy, *, step_s: float = 1.0, seed: int | None = None,
+               controlled_flow: str | None = None, background_policy: Policy | None = None) -> PolicyRun:
     if not isinstance(scenario, Scenario):
         raise TypeError("scenario must be a research.simulation.models.Scenario")
     if policy.topology.scenario.config_hash != scenario.config_hash:
         raise ValueError("the policy was built for a different scenario")
+    if background_policy is not None and background_policy.topology.scenario.config_hash != scenario.config_hash:
+        raise ValueError("the background policy was built for a different scenario")
     seed = scenario.seed if seed is None else seed
     load = offered_load(scenario, step_s, seed)  # validates step_s and seed
     n = len(load.times_s)
     links = sorted(scenario.links, key=lambda lk: lk.id)
     flows = sorted(scenario.flows, key=lambda f: f.id)
+    if controlled_flow is not None and controlled_flow not in {flow.id for flow in flows}:
+        raise ValueError(f"controlled_flow {controlled_flow!r} is not a scenario flow")
     link_ids = tuple(lk.id for lk in links)
     n_l, n_f = len(links), len(flows)
     events = sorted(scenario.failures, key=lambda e: (e.time_s, e.link_id, e.action))
 
     policy.reset()
+    if background_policy is not None:
+        background_policy.reset()
     arrays = {k: np.zeros((n, n_l)) for k in ("link_offered_rho", "link_loss")}
     link_delay = np.full((n, n_l), np.nan)
     link_up = np.ones((n, n_l), dtype=np.bool_)
@@ -107,11 +114,14 @@ def run_policy(scenario: Scenario, policy: Policy, *, step_s: float = 1.0, seed:
             if not load.active[step, j]:
                 step_decisions.append(())
                 continue
-            decision = policy.decide(flow, state)
+            deciding_policy = policy if controlled_flow is None or flow.id == controlled_flow else background_policy
+            if deciding_policy is None:
+                raise ValueError("background_policy is required when controlled_flow is set")
+            decision = deciding_policy.decide(flow, state)
             try:
                 check_decision(policy.topology, flow, decision, up)
             except InvalidDecisionError as exc:
-                raise InvalidDecisionError(f"policy {policy.name!r} at step {step}: {exc}") from exc
+                raise InvalidDecisionError(f"policy {deciding_policy.name!r} at step {step}: {exc}") from exc
             routing[flow.id] = decision
             step_decisions.append(decision)
             if decision:

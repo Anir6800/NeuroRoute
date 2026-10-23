@@ -153,7 +153,7 @@ class RoutingEnv(gym.Env):
         self._done = False
         self._cs = self._gen.for_flow(self._flow, self._up_by_step[self._t])
         self._pending_no_route = self._cs.no_route
-        return self._observation(), self._info({})
+        return self._observation(), self._info({"traffic_seed": self._traffic_seed})
 
     def action_masks(self) -> np.ndarray:
         """Boolean mask over the K actions (sb3-contrib convention). In a no-route state slot 0 is enabled so a masked
@@ -214,7 +214,7 @@ class RoutingEnv(gym.Env):
         self._done = terminated or truncated
         info = self._info({"action": action, "action_used": used, "invalid_action": invalid, "path": path, "delay_ms": delay_ms,
                            "loss": loss, "throughput_mbps": float(metrics.flow_throughput_mbps[i]), "route_change": changed,
-                           "reward_terms": terms, "no_route": terminated, "step_evaluated": t})
+                           "offered_mbps": offered[self._flow.id], "reward_terms": terms, "no_route": terminated, "step_evaluated": t})
         return self._observation(), reward, terminated, truncated, info
 
     # ------------------------------------------------------------------ internals

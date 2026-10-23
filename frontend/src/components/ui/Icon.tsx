@@ -6,6 +6,7 @@ export type IconName =
   | 'training'
   | 'experiments'
   | 'comparison'
+  | 'incidents'
   | 'sun'
   | 'moon'
   | 'menu'
@@ -31,6 +32,7 @@ const PATHS: Record<IconName, ReactNode> = {
   training: <path d="M3 17l6-6 4 4 8-8M15 7h6v6" />,
   experiments: <path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" />,
   comparison: <path d="M6 20V10M12 20V4M18 20v-7" />,
+  incidents: <path d="M12 3 3 20h18L12 3Zm0 6v4m0 4h.01" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />
